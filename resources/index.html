@@ -1,0 +1,1570 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>shopkeeper</title>
+<style>
+  /* ===== Tokyo Night Moon (dark theme, applied regardless of OS light/dark) ===== */
+  :root { color-scheme:dark;
+          --bg:#1e2030; --card:#222436; --card-2:#2f334d; --fill:#2f334d; --fill-2:#3b4261;
+          --line:#3b4261; --ink:#c8d3f5; --muted:#828bb8;
+          --accent:#82aaff; --accent-soft:rgba(130,170,255,.18); --good:#c3e88d; --warn:#ff966c;
+          --nav:rgba(30,32,48,.74); --radius:14px; --radius-lg:18px; --shadow:0 2px 10px rgba(0,0,0,.4); }
+  * { box-sizing:border-box; }
+  body { margin:0; font:17px/1.47 -apple-system,"SF Pro Text",system-ui,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+         background:var(--bg); color:var(--ink); -webkit-text-size-adjust:100%; -webkit-font-smoothing:antialiased; -webkit-tap-highlight-color:transparent; }
+  header { background:var(--nav); -webkit-backdrop-filter:saturate(180%) blur(20px); backdrop-filter:saturate(180%) blur(20px);
+           border-bottom:.5px solid var(--line); padding:.5rem .9rem; display:flex; align-items:center; gap:.6rem;
+           position:sticky; top:0; z-index:5; }
+  header h1 { font-size:1.3rem; margin:0; font-weight:700; letter-spacing:-.022em; }
+  header h1 .brand { color:var(--ink); }
+  .tabs { margin-left:auto; display:flex; gap:2px; background:var(--fill); padding:2px; border-radius:9px; overflow-x:auto; max-width:100%; }
+  .tabs button { border:none; background:transparent; color:var(--ink); white-space:nowrap;
+                 padding:.4rem .7rem; border-radius:7px; cursor:pointer; font-size:.9rem; font-weight:500; transition:.2s; }
+  .tabs button.active { background:var(--accent-soft); color:var(--accent); font-weight:600; }
+  main { max-width:980px; margin:1.1rem auto; padding:0 1rem; }
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+  @media (max-width:720px){ .grid { grid-template-columns:1fr; } }
+  .card { background:var(--card); border:none; border-radius:var(--radius-lg); padding:1.05rem; margin-bottom:1rem; box-shadow:var(--shadow); }
+  .card h2 { font-size:.95rem; margin:0 0 .7rem; color:var(--ink); letter-spacing:-.01em; font-weight:700; text-transform:none; }
+  /* the Add-item card stands apart from everything else */
+  .add-card { border:2px solid var(--accent); box-shadow:0 0 0 4px var(--accent-soft), 0 8px 26px rgba(0,0,0,.35); }
+  .add-card > h2 { font-size:1.25rem; font-weight:800; color:var(--accent); margin-bottom:.9rem; }
+  input, select, textarea { font:inherit; font-size:1rem; padding:.6rem .75rem; border:1px solid var(--line); border-radius:11px;
+                            width:100%; background:var(--fill); color:var(--ink); transition:box-shadow .15s, border-color .15s; }
+  input:focus, select:focus, textarea:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
+  input::placeholder, textarea::placeholder { color:var(--muted); opacity:.7; }
+  /* labeled form fields + sections (used heavily in Add item) */
+  .frow { display:flex; gap:.55rem; margin-bottom:.6rem; flex-wrap:wrap; align-items:flex-end; }
+  .field { display:flex; flex-direction:column; gap:.28rem; flex:1 1 8rem; min-width:0; }
+  .field > span { font-size:.74rem; color:var(--muted); font-weight:500; padding-left:.1rem; }
+  .sec-label { font-size:.72rem; font-weight:700; color:var(--accent); text-transform:uppercase; letter-spacing:.06em; margin:1.05rem 0 .55rem; }
+  .toggle-row { display:flex; align-items:center; gap:.4rem; margin-bottom:.55rem; cursor:pointer; color:var(--muted); font-size:.9rem; user-select:none; }
+  .toggle-row:hover { color:var(--accent); }
+  .addbtn { width:100%; padding:.85rem; font-size:1.05rem; margin-top:.3rem; }
+  .bigsearch { font-size:1.3rem; padding:.9rem 1rem; border-radius:14px; }
+  .res-prices { flex:1 1 100%; margin-top:.15rem; font-variant-numeric:tabular-nums; }
+  .res-prices b { color:var(--accent); font-weight:700; }
+  .affix { position:relative; display:flex; align-items:center; }
+  .affix input { padding-right:1.9rem; }
+  .affix .suffix { position:absolute; right:.7rem; color:var(--muted); pointer-events:none; font-size:.95rem; font-weight:600; }
+  .prow { display:flex; gap:.45rem; align-items:center; }
+  .prow > input { flex:1 1 auto; min-width:0; }
+  .cur { flex:0 0 auto; width:6rem; }
+  textarea { resize:vertical; min-height:2.7rem; }
+  button.act { background:var(--accent); color:#fff; border:none; padding:.62rem 1.1rem; border-radius:12px;
+               cursor:pointer; font:inherit; font-size:1rem; font-weight:600; transition:opacity .15s, transform .08s; }
+  button.act:hover { opacity:.9; }
+  button.act:active { transform:scale(.97); }
+  button.act:disabled { opacity:.4; cursor:default; }
+  button.mini { border:none; background:var(--fill); color:var(--accent); padding:.42rem .7rem;
+                border-radius:9px; cursor:pointer; font-size:.88rem; font-weight:500; transition:.15s; }
+  button.mini:hover { background:var(--fill-2); }
+  button.mini.active { background:var(--accent); color:#fff; }
+  .row { display:flex; gap:.5rem; align-items:center; }
+  ul { list-style:none; margin:.4rem 0 0; padding:0; }
+  li { padding:.65rem .1rem; border-bottom:.5px solid var(--line); display:flex; align-items:center; gap:.55rem; flex-wrap:wrap; }
+  li:last-child { border-bottom:none; }
+  .name { font-weight:600; }
+  .muted { color:var(--muted); font-size:.9rem; }
+  .price { margin-left:auto; font-variant-numeric:tabular-nums; font-weight:600; }
+  .pill { font-size:.72rem; padding:.14rem .5rem; border-radius:20px; background:var(--fill); color:var(--muted); font-weight:600; }
+  .add { cursor:pointer; }
+  .total { font-size:1.7rem; font-weight:700; letter-spacing:-.03em; }
+  .warn { color:var(--warn); }
+  .good { color:var(--good); }
+  .empty { color:var(--muted); padding:.6rem .2rem; }
+  /* ---- thumbnails & photos ---- */
+  img.thumb { width:2.6rem; height:2.6rem; object-fit:cover; border-radius:9px; vertical-align:middle;
+              margin-right:.55rem; background:var(--fill); }
+  img.thumb.tap { cursor:pointer; transition:transform .12s; }
+  img.thumb.tap:active { transform:scale(.94); }
+  .thumb-ph { display:inline-flex; align-items:center; justify-content:center; width:2.6rem; height:2.6rem;
+              border-radius:9px; margin-right:.55rem; background:var(--fill);
+              color:var(--muted); font-size:1.1rem; vertical-align:middle; }
+  .photo-strip { display:flex; flex-wrap:wrap; gap:.5rem; margin-top:.3rem; }
+  .photo-strip .cell { position:relative; }
+  .photo-strip { gap:.7rem; }
+  .photo-strip img { width:13rem; height:13rem; max-width:calc(100vw - 4rem); object-fit:contain; border-radius:14px; background:var(--fill); cursor:pointer; }
+  .photo-strip .x { width:1.7rem; height:1.7rem; font-size:.9rem; top:-.5rem; right:-.5rem; }
+  .photo-strip .x { position:absolute; top:-.4rem; right:-.4rem; width:1.35rem; height:1.35rem; border-radius:50%;
+                    background:var(--warn); color:#fff; border:2px solid var(--card); font-size:.72rem; line-height:1; cursor:pointer; }
+  /* ---- photo gallery modal ---- */
+  .modal-ov { position:fixed; inset:0; background:rgba(0,0,0,.4); -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);
+              z-index:25; display:flex; align-items:center; justify-content:center; padding:1rem; }
+  .modal-card { background:var(--card); border-radius:20px; box-shadow:0 20px 60px rgba(0,0,0,.35);
+                max-width:30rem; width:100%; max-height:88vh; overflow:auto; padding:1.2rem; }
+  .gallery { display:grid; grid-template-columns:repeat(auto-fill,minmax(96px,1fr)); gap:.6rem; margin:.5rem 0 .9rem; }
+  .gallery .cell { position:relative; aspect-ratio:1; }
+  .gallery img { width:100%; height:100%; object-fit:contain; border-radius:12px; background:var(--fill); cursor:pointer; }
+  .gallery .x { position:absolute; top:.3rem; right:.3rem; width:1.65rem; height:1.65rem; border-radius:50%;
+                background:rgba(0,0,0,.55); -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px); color:#fff; border:none; cursor:pointer; font-size:.9rem; line-height:1; }
+  /* ---- fullscreen lightbox ---- */
+  .lightbox { position:fixed; inset:0; background:rgba(0,0,0,.94); z-index:40; display:flex;
+              align-items:center; justify-content:center; touch-action:none; }
+  .lightbox img { max-width:94vw; max-height:88vh; object-fit:contain; border-radius:8px; }
+  .lightbox .nav { position:absolute; top:50%; transform:translateY(-50%); background:rgba(255,255,255,.16);
+                   -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); color:#fff; border:none; width:3rem; height:3rem; border-radius:50%; font-size:1.5rem; cursor:pointer; }
+  .lightbox .prev { left:1rem; } .lightbox .next { right:1rem; }
+  .lightbox .close { position:absolute; top:1rem; right:1rem; background:rgba(255,255,255,.16); -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px);
+                     color:#fff; border:none; width:2.6rem; height:2.6rem; border-radius:50%; font-size:1.3rem; cursor:pointer; }
+  .lightbox .count { position:absolute; bottom:1.3rem; left:50%; transform:translateX(-50%); color:#fff;
+                     background:rgba(0,0,0,.5); -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); padding:.3rem .85rem; border-radius:20px; font-size:.85rem; }
+  /* ---- category chips (Sell) — horizontal scroll ---- */
+  .chips { display:flex; gap:.45rem; overflow-x:auto; padding-bottom:.3rem; -webkit-overflow-scrolling:touch; scroll-snap-type:x proximity; }
+  .chips::-webkit-scrollbar { height:6px; }
+  .chips::-webkit-scrollbar-thumb { background:var(--fill-2); border-radius:6px; }
+  .chip { flex:0 0 auto; scroll-snap-align:start; border:none; background:var(--fill); color:var(--ink); border-radius:20px;
+          padding:.45rem .95rem; cursor:pointer; font:inherit; font-size:.9rem; font-weight:500; white-space:nowrap; transition:.15s; }
+  .chip:hover { background:var(--fill-2); }
+  .chip.active { background:var(--accent); color:#fff; }
+  .chip-n { opacity:.65; font-size:.8rem; margin-left:.15rem; }
+  .chip.active .chip-n { opacity:.9; }
+  #cat-items:empty { display:none; }
+  /* ---- quick sell buttons ---- */
+  .quickgrid { display:flex; flex-wrap:wrap; gap:.55rem; }
+  .qbtn { border:none; background:var(--fill); color:var(--ink); border-radius:13px;
+          padding:.65rem .8rem; cursor:pointer; text-align:left; min-width:6.5rem; font:inherit; transition:.12s; }
+  .qbtn:hover { background:var(--fill-2); }
+  .qbtn:active { background:var(--accent); color:#fff; }
+  .qbtn b { display:block; font-size:.95rem; font-weight:600; }
+  .qbtn span { font-size:.82rem; color:var(--muted); }
+  /* ---- dash metrics + catalog ---- */
+  .metrics { display:grid; grid-template-columns:repeat(auto-fit,minmax(7rem,1fr)); gap:.8rem; }
+  .metric { background:var(--card); border:none; border-radius:var(--radius); padding:1rem 1.1rem; box-shadow:var(--shadow); }
+  .metric .n { font-size:2.1rem; font-weight:700; letter-spacing:-.04em; line-height:1.02; }
+  .metric .l { font-size:.82rem; color:var(--muted); font-weight:500; margin-top:.3rem; }
+  /* ---- category sections (Apple: bold titles + hairline + whitespace) ---- */
+  .cat-group { margin-bottom:1.8rem; } .cat-group:last-child { margin-bottom:.2rem; }
+  .cat-head { display:flex; align-items:baseline; gap:.5rem; font-size:1.4rem; font-weight:700; letter-spacing:-.028em;
+              color:var(--ink); text-transform:capitalize; margin:0 0 .9rem; padding-bottom:.55rem; border-bottom:.5px solid var(--line); }
+  .cat-n { font-size:.95rem; font-weight:500; color:var(--muted); }
+  .catalog { display:grid; grid-template-columns:repeat(auto-fill,minmax(9.5rem,1fr)); gap:1rem; margin-top:.2rem; }
+  .prod { border:none; border-radius:var(--radius); overflow:hidden; background:var(--card);
+          box-shadow:var(--shadow); transition:transform .12s; }
+  .prod:active { transform:scale(.98); }
+  .prod > div:first-child { cursor:pointer; }
+  /* ---- inline price editor ---- */
+  .pedit { display:inline-flex; gap:.25rem; align-items:center; }
+  .pedit input { width:4.2rem; padding:.22rem .35rem; font-size:.9rem; }
+  .pedit select { width:auto; padding:.22rem .3rem; font-size:.85rem; }
+  /* ---- vim keyboard focus + help ---- */
+  .vim-focus { outline:none; box-shadow:0 0 0 2px var(--accent), 0 0 0 6px var(--accent-soft); border-radius:14px; }
+  .kbdbtn { padding:.4rem .55rem; font-size:.95rem; line-height:1; }
+  .vim-help table { width:100%; border-collapse:collapse; margin-top:.3rem; }
+  .vim-help td { padding:.4rem .1rem; border-bottom:.5px solid var(--line); vertical-align:top; }
+  .vim-help tr:last-child td { border-bottom:none; }
+  .vim-help td.k { white-space:nowrap; width:8.5rem; }
+  .vim-help kbd { display:inline-block; min-width:1.4rem; text-align:center; padding:.1rem .4rem; margin-right:.25rem;
+                  border-radius:6px; background:var(--fill);
+                  font:600 .8rem ui-monospace,"SF Mono",Menlo,Consolas,monospace; color:var(--ink); }
+  .prod .ph { width:100%; aspect-ratio:1; object-fit:contain; object-position:center; display:block; background:var(--fill); }
+  .prod .noimg { width:100%; aspect-ratio:1; display:flex; align-items:center; justify-content:center;
+                 background:var(--fill); color:var(--muted); font-size:2rem; }
+  .prod .body { padding:.7rem .75rem .8rem; }
+  .prod .body .nm { font-weight:600; font-size:.95rem; line-height:1.3; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
+  .prod .body .pr { color:var(--accent); font-weight:600; font-size:1rem; margin-top:.35rem; cursor:pointer; letter-spacing:-.01em; }
+  /* structured item label: brand · option · size */
+  .brand-tag { font-weight:700; }
+  .nm-mid { color:var(--ink); font-weight:500; }
+  .szchip { display:inline-block; font-size:.72rem; font-weight:600; color:var(--muted); background:var(--fill);
+            border-radius:6px; padding:.02rem .4rem; vertical-align:middle; }
+  #toast { position:fixed; bottom:1.4rem; left:50%; transform:translateX(-50%); background:rgba(20,22,34,.94);
+           -webkit-backdrop-filter:blur(20px); backdrop-filter:blur(20px); color:#fff; padding:.75rem 1.2rem; border-radius:14px;
+           opacity:0; transition:opacity .2s; pointer-events:none; z-index:50; box-shadow:0 8px 30px rgba(0,0,0,.3); }
+  #toast.show { opacity:1; }
+  /* ============ motion / smoothness ============ */
+  :root { --ease-out:cubic-bezier(.16,1,.3,1); --ease-spring:cubic-bezier(.34,1.4,.64,1); }
+  html { scroll-behavior:smooth; }
+  @keyframes fadeUp { from{ opacity:0; transform:translateY(10px); } to{ opacity:1; transform:none; } }
+  @keyframes fadeIn { from{ opacity:0; } to{ opacity:1; } }
+  @keyframes popIn  { from{ opacity:0; transform:scale(.94) translateY(8px); } to{ opacity:1; transform:none; } }
+  @keyframes overlayIn { from{ opacity:0; } to{ opacity:1; } }
+  @keyframes zoomIn { from{ opacity:0; transform:scale(.9); } to{ opacity:1; transform:none; } }
+  /* view + content entrances */
+  main > section { animation:fadeUp .42s var(--ease-out) both; }
+  .prod { animation:fadeUp .4s var(--ease-out) both; }
+  .cat-group { animation:fadeIn .5s ease both; }
+  .modal-ov { animation:overlayIn .22s ease both; }
+  .modal-card { animation:popIn .4s var(--ease-out) both; }
+  .lightbox { animation:overlayIn .2s ease both; }
+  .lightbox img { animation:zoomIn .34s var(--ease-out) both; }
+  /* smooth, springy interactions */
+  button.act, button.mini, .tabs button, .qbtn, .prod, .metric, img.thumb.tap, .vim-focus, li {
+    transition:transform .2s var(--ease-spring), background-color .2s ease, color .2s ease, box-shadow .25s ease, opacity .2s ease; }
+  button.act:active { transform:scale(.96); }
+  .qbtn:active, .prod:active, img.thumb.tap:active { transform:scale(.96); }
+  /* toast slides up as it fades */
+  #toast { transform:translateX(-50%) translateY(14px); transition:opacity .28s var(--ease-out), transform .28s var(--ease-out); }
+  #toast.show { transform:translateX(-50%) translateY(0); }
+  /* respect users who prefer less motion */
+  @media (prefers-reduced-motion: reduce){
+    *, *::before, *::after { animation-duration:.001ms !important; animation-iteration-count:1 !important;
+                             transition-duration:.001ms !important; scroll-behavior:auto !important; } }
+  /* ---- iPhone safe areas (notch / home indicator) ---- */
+  header { padding-top:max(.5rem, env(safe-area-inset-top));
+           padding-left:max(.9rem, env(safe-area-inset-left)); padding-right:max(.9rem, env(safe-area-inset-right)); }
+  main { padding-left:max(1rem, env(safe-area-inset-left)); padding-right:max(1rem, env(safe-area-inset-right));
+         padding-bottom:calc(1.5rem + env(safe-area-inset-bottom)); }
+  #toast { bottom:calc(1.4rem + env(safe-area-inset-bottom)); }
+  /* ---- iOS Messages-style chat bubbles (Ask tab) ---- */
+  #chat { display:flex; flex-direction:column; gap:.4rem; }
+  .bubble { max-width:80%; padding:.55rem .85rem; border-radius:18px; white-space:pre-wrap; line-height:1.35;
+            font-size:.95rem; word-break:break-word; animation:popIn .28s var(--ease-out) both; }
+  .bubble.you { align-self:flex-end; background:var(--accent); color:#fff; border-bottom-right-radius:6px; }
+  .bubble.ai  { align-self:flex-start; background:var(--fill); color:var(--ink); border-bottom-left-radius:6px; }
+  /* ================= layout modes: mobile vs desktop ================= */
+  /* bottom tab bar — shown only in mobile mode */
+  #tabbar { position:fixed; left:0; right:0; bottom:0; z-index:20; display:none; justify-content:space-around;
+            background:var(--nav); -webkit-backdrop-filter:saturate(180%) blur(20px); backdrop-filter:saturate(180%) blur(20px);
+            border-top:.5px solid var(--line); padding:.3rem .1rem calc(.3rem + env(safe-area-inset-bottom)); }
+  #tabbar button { flex:1; border:none; background:none; color:var(--muted); cursor:pointer;
+                   display:flex; flex-direction:column; align-items:center; gap:2px; font-size:.66rem; font-weight:500;
+                   padding:.35rem .2rem; transition:color .15s, transform .15s var(--ease-spring); }
+  #tabbar button .ic { font-size:1.45rem; line-height:1; }
+  #tabbar button.active { color:var(--accent); }
+  #tabbar button:active { transform:scale(.9); }
+  /* --- MOBILE: bottom nav, single column, big touch targets --- */
+  .ui-mobile .tabs, .ui-mobile .kbdbtn { display:none; }
+  .ui-mobile #mode-toggle { display:inline-flex; margin-left:auto; }
+  .ui-mobile #tabbar { display:flex; }
+  .ui-mobile header h1 { font-size:1.35rem; }
+  .ui-mobile main { max-width:680px; padding-bottom:calc(4.9rem + env(safe-area-inset-bottom)); }
+  .ui-mobile .card { padding:1.1rem; border-radius:18px; }
+  .ui-mobile input, .ui-mobile select, .ui-mobile textarea { font-size:1.05rem; padding:.78rem .85rem; min-height:2.9rem; }
+  .ui-mobile button.act { font-size:1.05rem; padding:.85rem 1.2rem; }
+  .ui-mobile button.mini { font-size:.95rem; padding:.55rem .85rem; }
+  .ui-mobile .grid { grid-template-columns:1fr; }
+  .ui-mobile .catalog { grid-template-columns:repeat(2,1fr); gap:.7rem; }
+  .ui-mobile .metrics { grid-template-columns:repeat(2,1fr); }
+  .ui-mobile .metric .n { font-size:1.9rem; }
+  .ui-mobile .cat-head { font-size:1.3rem; }
+  .ui-mobile .qbtn { min-width:7.5rem; padding:.8rem .9rem; }
+  /* --- DESKTOP: top tabs, denser grids, wider --- */
+  .ui-desktop #tabbar { display:none; }
+  .ui-desktop main { max-width:1120px; }
+  .ui-desktop .catalog { grid-template-columns:repeat(auto-fill,minmax(8.5rem,1fr)); }
+  .ui-desktop .metrics { grid-template-columns:repeat(auto-fit,minmax(7.5rem,1fr)); }
+  /* ---- pointer hover highlight (mouse only; never sticks on touch) ---- */
+  @media (hover:hover){
+    .prod { cursor:pointer; }
+    /* hover lights up an accent border around the item + a soft glow */
+    .prod:hover { transform:translateY(-2px); box-shadow:0 0 0 2px var(--accent), 0 8px 24px var(--accent-soft); }
+    li:hover { background:var(--fill); box-shadow:inset 0 0 0 1.5px var(--accent); border-radius:10px; }
+    .qbtn:hover { background:var(--fill); box-shadow:0 0 0 2px var(--accent), 0 6px 18px var(--accent-soft); }
+    .metric:hover { box-shadow:0 0 0 1.5px var(--accent), 0 6px 20px var(--accent-soft); }
+    .card:hover { box-shadow:0 0 0 1px var(--accent-soft), var(--shadow); }
+    .gallery img:hover, img.thumb.tap:hover { box-shadow:0 0 0 2px var(--accent); }
+    .tabs button:hover:not(.active) { color:var(--accent); }
+    button.mini:hover { background:var(--fill-2); box-shadow:0 0 0 1.5px var(--accent); }
+    #tabbar button:hover { color:var(--accent); }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>🛒 <span class="brand">shopkeeper</span></h1>
+  <button class="mini kbdbtn" onclick="toggleVimHelp()" title="keyboard shortcuts (press ?)">⌨</button>
+  <div class="tabs">
+    <button id="tab-sell" class="active" onclick="show('sell')">Sell</button>
+    <button id="tab-find" onclick="show('find')">Find</button>
+    <button id="tab-stock" onclick="show('stock')">Stock</button>
+    <button id="tab-cats" onclick="show('cats')">Cats</button>
+    <button id="tab-ask" onclick="show('ask')">Ask</button>
+    <button id="tab-dash" onclick="show('dash')">Dash</button>
+  </div>
+  <button class="mini kbdbtn" id="mode-toggle" onclick="toggleUiMode()" title="Switch layout">🖥️</button>
+</header>
+
+<main>
+  <!-- SELL -->
+  <section id="view-sell">
+    <div class="card">
+      <input id="search" class="bigsearch" placeholder="🔍 Search item or brand…" oninput="search()" autocomplete="off">
+      <ul id="results"><li class="empty">Type a name or brand to see prices…</li></ul>
+    </div>
+    <div class="card">
+      <h2>Price mode</h2>
+      <div class="row">
+        <button class="mini active" id="pm-retail" onclick="setMode('retail')">Single</button>
+        <button class="mini" id="pm-pack" onclick="setMode('pack')">Pack</button>
+        <button class="mini" id="pm-wholesale" onclick="setMode('wholesale')">Wholesale</button>
+        <span class="muted" id="pm-label">selling at single</span>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Category — tap to browse</h2>
+      <div id="cat-chips" class="chips"><span class="empty">Loading…</span></div>
+      <ul id="cat-items"></ul>
+    </div>
+    <div class="card">
+      <h2>Quick — tap to add</h2>
+      <div id="quick" class="quickgrid"><span class="empty">Loading…</span></div>
+    </div>
+    <div class="card">
+      <h2>Quick entry (AI)</h2>
+      <div class="row">
+        <textarea id="ai-text" placeholder="type a sale: 2 coke, rice 3kg, 6 eggs"></textarea>
+      </div>
+      <div class="row" style="margin-top:.5rem">
+        <button class="act" onclick="aiParse()">Parse into cart</button>
+        <span class="muted" id="ai-note"></span>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Barcode — scan (hardware) or type</h2>
+      <div class="row">
+        <input id="barcode" placeholder="scan or type a barcode, then Enter" inputmode="numeric"
+               autocomplete="off" onkeydown="if(event.key==='Enter')scanEnter()">
+        <button class="mini" id="cam-btn" onclick="cameraScan()" style="display:none">📷</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Cart</h2>
+      <ul id="cart"><li class="empty">Cart is empty</li></ul>
+      <div class="row" style="margin-top:.8rem">
+        <span class="muted">Total</span><span class="total price" id="cart-total">0.00</span>
+      </div>
+      <div class="row" style="margin-top:.8rem">
+        <select id="pay" style="max-width:8rem"><option>cash</option><option>card</option></select>
+        <button class="act" id="pay-btn" onclick="checkout()" disabled style="margin-left:auto">Complete sale</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- FIND (price lookup by brand / name) -->
+  <section id="view-find" style="display:none">
+    <div class="card">
+      <input id="find-search" class="bigsearch" placeholder="🔎 Search by brand or name…" oninput="findSearch()" autocomplete="off">
+      <ul id="find-results"><li class="empty">Type a brand or name to see prices…</li></ul>
+    </div>
+  </section>
+
+  <!-- STOCK -->
+  <section id="view-stock" style="display:none">
+    <div class="card">
+      <h2>Bulk add / import (fast)</h2>
+      <div class="muted" style="margin-bottom:.4rem">columns: name, retail, wholesale, cost, qty, category, supplier, barcode — or with a header row add <b>brand</b> and <b>size</b>. Comma or | separated · header row optional</div>
+      <div class="row" style="margin-bottom:.4rem">
+        <input type="file" id="import-file" accept=".csv,.txt" onchange="loadImportFile()">
+        <button class="mini" onclick="downloadTemplate()">template</button>
+      </div>
+      <textarea id="fast-input" placeholder="Coke, 1.75, 1.40, 1.10, 24, drinks&#10;Rice, 0.90, , 0.70, 50, staples" style="min-height:5rem"></textarea>
+      <div class="row" style="margin-top:.5rem"><button class="act" onclick="fastAdd()">Import all</button><span class="muted" id="fast-note"></span></div>
+    </div>
+    <div class="card">
+      <h2>AI add — type or paste items (local AI)</h2>
+      <textarea id="ai-items" placeholder="e.g. Coca-Cola 330ml, drinks, sell 1.75 wholesale 1.40 cost 1.10, 24 in stock, from ABC"></textarea>
+      <div class="row" style="margin-top:.5rem">
+        <button class="act" onclick="aiParseItems()">Parse</button>
+        <span class="muted" id="ai-items-note"></span>
+      </div>
+      <div id="ai-drafts"></div>
+    </div>
+    <div class="card add-card">
+      <h2 id="add-title">＋ Add item</h2>
+      <div class="row" style="margin-bottom:.5rem">
+        <button class="mini active" id="am-general" onclick="setAddMode('general')">General</button>
+        <button class="mini" id="am-alcohol" onclick="setAddMode('alcohol')">🍷 Alcohol</button>
+        <span class="muted" style="font-size:.8rem">beer &amp; sodas → General</span>
+      </div>
+      <div id="alc-types" class="chips" style="display:none;margin-bottom:.55rem"></div>
+
+      <div class="sec-label">Item</div>
+      <label class="field" style="margin-bottom:.6rem"><span>Barcode</span>
+        <div class="row">
+          <input id="ni-barcode" placeholder="scan or type, then Enter to look up" inputmode="numeric"
+                 autocomplete="off" onkeydown="if(event.key==='Enter')lookupBarcode()">
+          <button class="mini" id="ni-cam" onclick="scanBarcodeInto()" style="display:none">📷 Scan</button>
+        </div>
+      </label>
+      <div class="frow">
+        <label class="field" style="flex:2 1 8rem"><span>Brand</span><input id="ni-brand" list="dl-brand" autocomplete="off" placeholder="Kaiserdom"></label>
+        <label class="field" style="flex:2 1 8rem"><span>Option</span><input id="ni-name" list="dl-option" autocomplete="off" placeholder="crystal — optional"></label>
+        <label class="field" style="flex:1 1 5rem"><span>Size</span><input id="ni-size" list="dl-size" autocomplete="off" placeholder="500ml" onkeydown="if(event.key==='Enter')addItem()"></label>
+      </div>
+      <div class="frow">
+        <label class="field" style="flex:2 1 8rem"><span>Category</span><input id="ni-category" list="dl-category" autocomplete="off" placeholder="drinks, snacks…"></label>
+        <label class="field" style="flex:1 1 6rem"><span>Sell unit</span>
+          <select id="ni-unit"><option value="single">single</option><option value="pack">pack</option><option value="wholesale">wholesale</option></select>
+        </label>
+      </div>
+
+      <div class="sec-label">Price</div>
+      <label class="field" style="margin-bottom:.6rem"><span>Single price</span>
+        <div class="prow"><input id="ni-retail" placeholder="0" inputmode="decimal" onkeydown="if(event.key==='Enter')addItem()">
+          <select id="ni-currency" class="cur"><option value="KHR">៛ Riel</option><option value="USD">$ USD</option></select></div>
+      </label>
+      <div class="toggle-row" onclick="toggleWholesale()"><span id="ni-wsec-caret">▸</span> Pack / cost prices</div>
+      <div id="ni-wsec" style="display:none">
+        <label class="field" style="margin-bottom:.6rem"><span>Pack price</span>
+          <div class="prow"><input id="ni-pack" placeholder="6-pack / sleeve" inputmode="decimal">
+            <select id="ni-pack-cur" class="cur"><option value="KHR">៛ Riel</option><option value="USD">$ USD</option></select></div>
+        </label>
+        <label class="field"><span>Cost (buy)</span>
+          <div class="prow"><input id="ni-cost" placeholder="what you paid" inputmode="decimal">
+            <select id="ni-cost-cur" class="cur"><option value="KHR">៛ Riel</option><option value="USD">$ USD</option></select></div>
+        </label>
+      </div>
+
+      <div class="sec-label">Wholesale</div>
+      <label class="field"><span>Wholesale price (whole box)</span>
+        <div class="prow"><input id="ni-wholesale" placeholder="0" inputmode="decimal">
+          <select id="ni-wholesale-cur" class="cur"><option value="KHR">៛ Riel</option><option value="USD">$ USD</option></select></div>
+      </label>
+
+      <div class="sec-label">More <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">· optional</span></div>
+      <div class="toggle-row" onclick="toggleDrink()"><span id="ni-dsec-caret">▸</span> 🍷 Drink / alcohol info</div>
+      <div id="ni-dsec" style="display:none">
+        <div class="frow">
+          <label class="field" style="flex:1 1 5rem"><span>ABV</span>
+            <div class="affix"><input id="ni-abv" placeholder="14.5" inputmode="decimal"><span class="suffix">%</span></div>
+          </label>
+          <label class="field" style="flex:1 1 6rem"><span>Vintage</span><input id="ni-vintage" placeholder="2022" inputmode="numeric"></label>
+        </div>
+        <div class="frow">
+          <label class="field" style="flex:1 1 8rem"><span>Style / varietal</span><input id="ni-style" list="dl-style" autocomplete="off" placeholder="Shiraz, IPA…"></label>
+          <label class="field" style="flex:1 1 8rem"><span>Origin / region</span><input id="ni-origin" list="dl-origin" autocomplete="off" placeholder="Coonawarra"></label>
+        </div>
+      </div>
+      <div id="ni-opts"></div>
+      <div class="row" style="margin-bottom:.6rem"><button class="mini" onclick="addOptRow()">+ amount option</button><span class="muted">e.g. Cold, Normal, Set(24)</span></div>
+      <div style="margin-bottom:.6rem">
+        <div class="row"><button class="mini" onclick="pickImageForNew()">📷 Add photo</button><span class="muted" id="ni-photo-note">you can add several</span></div>
+        <div class="photo-strip" id="ni-photos"></div>
+      </div>
+      <label class="field" style="margin-bottom:.75rem"><span>Supplier / note</span><input id="ni-supplier" list="dl-supplier" autocomplete="off" placeholder="optional"></label>
+
+      <button class="act addbtn" onclick="addItem()">＋ Add item</button>
+    </div>
+    <div class="card">
+      <h2>Items — tap price to change, use +qty to restock</h2>
+      <div id="stock-cat-chips" class="chips"></div>
+      <ul id="stock-list"><li class="empty">Loading…</li></ul>
+    </div>
+  </section>
+
+  <!-- CATEGORIES -->
+  <section id="view-cats" style="display:none">
+    <div class="card">
+      <h2>Categories</h2>
+      <div class="muted" style="margin-bottom:.4rem">tap a category to open its items · “rename” fixes a typo or merges into another category</div>
+      <div id="cats"><div class="empty">Loading…</div></div>
+    </div>
+  </section>
+
+  <!-- ASK (AI assistant) -->
+  <section id="view-ask" style="display:none">
+    <div class="card">
+      <h2>Ask the assistant (local AI)</h2>
+      <div id="chat" style="min-height:8rem;max-height:52vh;overflow-y:auto"></div>
+      <div class="row" style="margin-top:.6rem">
+        <input id="ask-input" placeholder="price coke · sales today · sell 2 coke · restock rice 20"
+               autocomplete="off" onkeydown="if(event.key==='Enter')sendAssistant()">
+        <button class="act" onclick="sendAssistant()">Send</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- DASHBOARD -->
+  <section id="view-dash" style="display:none">
+    <div class="row" style="margin-bottom:.7rem">
+      <span class="muted" style="font-weight:700;text-transform:uppercase;letter-spacing:.05em;font-size:.75rem">Overview</span>
+      <button class="mini" onclick="loadDash()" style="margin-left:auto">↻ Refresh</button>
+    </div>
+    <div class="metrics" id="metrics" style="margin-bottom:.9rem"></div>
+    <div class="card">
+      <div class="row" style="margin-bottom:.5rem">
+        <h2 style="margin:0">Catalog</h2>
+        <select id="dash-sort" onchange="renderCatalog()" style="margin-left:auto;max-width:11.5rem">
+          <option value="category">Group by category</option>
+          <option value="name-asc">Name · A → Z</option>
+          <option value="name-desc">Name · Z → A</option>
+          <option value="price-asc">Price · low → high</option>
+          <option value="price-desc">Price · high → low</option>
+          <option value="newest">Newest first</option>
+        </select>
+      </div>
+      <div id="catalog"><span class="empty">Loading…</span></div>
+    </div>
+    <div class="grid">
+      <div class="card"><h2>Today's sales</h2>
+        <div class="row"><span class="total good price" id="today-total">0.00</span>
+          <span class="muted" id="today-count">0 sales</span></div>
+        <ul id="today-list"></ul>
+      </div>
+      <div class="card"><h2>Low stock</h2><ul id="low"></ul></div>
+    </div>
+    <div class="card"><h2>Best sellers (30d)</h2><ul id="best"></ul></div>
+  </section>
+</main>
+
+<!-- autocomplete sources for fast, consistent entry (filled from existing items) -->
+<datalist id="dl-brand"></datalist><datalist id="dl-option"></datalist><datalist id="dl-size"></datalist>
+<datalist id="dl-category"></datalist><datalist id="dl-supplier"></datalist><datalist id="dl-unit"></datalist>
+<datalist id="dl-style"></datalist><datalist id="dl-origin"></datalist>
+
+<!-- bottom tab bar (mobile mode only) -->
+<nav id="tabbar">
+  <button id="btab-sell" onclick="show('sell')"><span class="ic">🛒</span>Sell</button>
+  <button id="btab-find" onclick="show('find')"><span class="ic">🔎</span>Find</button>
+  <button id="btab-stock" onclick="show('stock')"><span class="ic">📦</span>Stock</button>
+  <button id="btab-cats" onclick="show('cats')"><span class="ic">🗂️</span>Cats</button>
+  <button id="btab-ask" onclick="show('ask')"><span class="ic">💬</span>Ask</button>
+  <button id="btab-dash" onclick="show('dash')"><span class="ic">📊</span>Dash</button>
+</nav>
+
+<div id="toast"></div>
+
+<script src="/static/vendor/zxing.min.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const money = n => (n==null? '—' : Number(n).toFixed(2));
+const fmt = (p,c) => (p==null? '—' : (c==='KHR' ? '៛'+Math.round(Number(p)).toLocaleString() : '$'+Number(p).toFixed(2)));
+const esc = s => (s??'').toString().replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let cart = [];
+let priceMode = 'retail';   // 'retail' | 'wholesale'
+let TOKEN = localStorage.getItem('sk_token') || '';
+const modePrice = it => {
+  if(priceMode==='wholesale' && it.wholesale!=null) return it.wholesale;
+  if(priceMode==='pack' && it.pack!=null) return it.pack;
+  return it.retail;
+};
+
+function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2000); }
+
+async function api(path, opts={}){
+  opts.headers = Object.assign({}, opts.headers||{}, TOKEN?{'X-Token':TOKEN}:{});
+  const r = await fetch(path, opts);
+  if(r.status===401){ TOKEN=''; localStorage.removeItem('sk_token'); askToken(); throw new Error('password required'); }
+  if(!r.ok){ let d; try{ d=(await r.json()).detail; }catch(_){} throw new Error(d || r.statusText); }
+  return r.json();
+}
+function askToken(){ const t = prompt('Enter shop PIN:'); if(t && t.trim()){ TOKEN=t.trim(); localStorage.setItem('sk_token',TOKEN); location.reload(); } }
+async function checkAuth(){ try{ const a = await (await fetch('/api/auth')).json(); if(a.required && !TOKEN) askToken(); }catch(_){} }
+
+let currentView='sell';
+function show(v){
+  currentView=v;
+  for(const k of ['sell','find','stock','cats','ask','dash']){
+    const on = k===v;
+    $('#view-'+k).style.display = on?'':'none';
+    const t=document.getElementById('tab-'+k); if(t) t.classList.toggle('active', on);
+    const b=document.getElementById('btab-'+k); if(b) b.classList.toggle('active', on);
+  }
+  if(v==='sell'){ loadQuick(); loadCategories(); }
+  if(v==='dash') loadDash();
+  if(v==='stock') loadStock();
+  if(v==='cats') loadCats();
+  if(v==='ask') setTimeout(()=>$('#ask-input')&&$('#ask-input').focus(),50);
+  if(v==='find') setTimeout(()=>$('#find-search')&&$('#find-search').focus(),50);
+}
+
+function setMode(m){
+  priceMode = m;
+  for(const k of ['retail','pack','wholesale']){ const b=$('#pm-'+k); if(b) b.classList.toggle('active', m===k); }
+  $('#pm-label').textContent = 'selling at ' + (m==='retail'?'single':m);
+  loadQuick(); doSearch(); renderCatItems();
+}
+
+async function loadQuick(){
+  const el=$('#quick');
+  try{
+    const items = await api('/api/quick');
+    if(!items.length){ el.innerHTML='<span class="empty">Add items in the Stock tab</span>'; return; }
+    el.innerHTML='';
+    for(const it of items){
+      const price = modePrice(it);
+      if(price==null) continue;
+      const b=document.createElement('button'); b.className='qbtn';
+      b.innerHTML=`${thumb(it)}<b>${esc(it.name)}</b><span>${fmt(price,it.currency)}</span>`;
+      b.onclick=()=>{ addToCart(it); };
+      el.appendChild(b);
+    }
+  }catch(e){ el.innerHTML='<span class="empty">—</span>'; }
+}
+
+// ---- Category quick-picker (Sell): scrollable chips → tap to browse a category ----
+let sellCatItems=[], sellCat='__all';
+async function loadCategories(){
+  try{ sellCatItems = await api('/api/items'); }catch(_){ sellCatItems=[]; }
+  const chips=$('#cat-chips'); if(!chips) return;
+  const cats=[...new Set(sellCatItems.map(i=>i.category||'—'))].sort((a,b)=>a.localeCompare(b));
+  if(!cats.some(c=>c===sellCat) && sellCat!=='__all') sellCat='__all';
+  const count=c=>sellCatItems.filter(i=>(i.category||'—')===c).length;
+  const mk=(val,label,n)=>`<button class="chip${sellCat===val?' active':''}" data-cat="${esc(val)}" onclick="pickCategory(this.dataset.cat)">${esc(label)}<span class="chip-n">${n}</span></button>`;
+  chips.innerHTML = mk('__all','All',sellCatItems.length) + cats.map(c=>mk(c,c,count(c))).join('');
+  renderCatItems();
+}
+function pickCategory(c){ sellCat=c;
+  document.querySelectorAll('#cat-chips .chip').forEach(b=>b.classList.toggle('active', b.dataset.cat===c));
+  const act=document.querySelector('#cat-chips .chip.active'); if(act) act.scrollIntoView({inline:'center',block:'nearest'});
+  renderCatItems();
+}
+function renderCatItems(){
+  const box=$('#cat-items'); if(!box) return;
+  let items = sellCat==='__all' ? sellCatItems.slice() : sellCatItems.filter(i=>(i.category||'—')===sellCat);
+  items.sort((a,b)=> (a.category||'').localeCompare(b.category||'') || (a.name||'').localeCompare(b.name||''));
+  box.innerHTML = items.length ? '' : '<li class="empty">No items in this category</li>';
+  for(const it of items){
+    const li=document.createElement('li'); li.className='add';
+    const price=modePrice(it);
+    li.innerHTML=`${thumb(it)}<span class="name">${itemLabel(it)}</span>`
+      +`<span class="price">${price==null?'<span class="warn">no price</span>':fmt(price,it.currency)}</span>`;
+    li.onclick=()=>addToCart(it); box.appendChild(li);
+  }
+}
+
+// ---- Sell ----
+let searchTimer;
+function search(){ clearTimeout(searchTimer); searchTimer=setTimeout(doSearch,150); }
+async function doSearch(){
+  const q=$('#search').value.trim(), ul=$('#results');
+  if(!q){ ul.innerHTML='<li class="empty">Type to search…</li>'; return; }
+  const items = await api('/api/search?q='+encodeURIComponent(q));
+  ul.innerHTML = items.length ? '' : '<li class="empty">No matches</li>';
+  for(const it of items){
+    const li=document.createElement('li'); li.className='add';
+    const parts=[];
+    if(it.retail!=null)    parts.push(`<b>${fmt(it.retail,it.currency)}</b> single`);
+    if(it.pack!=null)      parts.push(`${fmt(it.pack,it.currency)} pack`);
+    if(it.wholesale!=null) parts.push(`${fmt(it.wholesale,it.currency)} box`);
+    const prices = parts.length ? parts.join(' · ') : '<span class="warn">no price set</span>';
+    li.innerHTML=`<div style="flex:1 1 100%">${thumb(it)}<span class="name">${itemLabel(it)}</span></div>
+      <div class="res-prices">${prices}</div>`;
+    li.onclick=()=>addToCart(it); ul.appendChild(li);
+  }
+}
+// ---- Find tab: pure price lookup by brand / name (read-only) ----
+let findTimer;
+function findSearch(){ clearTimeout(findTimer); findTimer=setTimeout(doFindSearch,150); }
+async function doFindSearch(){
+  const q=$('#find-search').value.trim(), ul=$('#find-results');
+  if(!q){ ul.innerHTML='<li class="empty">Type a brand or name to see prices…</li>'; return; }
+  let items; try{ items=await api('/api/search?q='+encodeURIComponent(q)); }
+  catch(e){ ul.innerHTML='<li class="empty">Error: '+esc(e.message)+'</li>'; return; }
+  ul.innerHTML = items.length ? '' : '<li class="empty">No matches</li>';
+  for(const it of items){
+    const li=document.createElement('li');
+    const parts=[];
+    if(it.retail!=null)    parts.push(`<b>${fmt(it.retail,it.currency)}</b> single`);
+    if(it.pack!=null)      parts.push(`${fmt(it.pack,it.currency)} pack`);
+    if(it.wholesale!=null) parts.push(`${fmt(it.wholesale,it.currency)} box`);
+    const prices = parts.length ? parts.join(' · ') : '<span class="warn">no price set</span>';
+    li.innerHTML=`<div style="flex:1 1 100%">${thumb(it)}<span class="name">${itemLabel(it)}</span></div>
+      <div class="res-prices">${prices}</div>`;
+    ul.appendChild(li);
+  }
+}
+function addToCart(it){
+  const price = modePrice(it);
+  if(price==null){ toast('Set a price first (Stock tab)'); return; }
+  let kind='retail';
+  if(priceMode==='wholesale' && it.wholesale!=null) kind='wholesale';
+  else if(priceMode==='pack' && it.pack!=null) kind='pack';
+  const ex=cart.find(l=>l.item_id===it.id && l.kind===kind);
+  if(ex){ ex.quantity+=1; } else { cart.push({item_id:it.id,name:it.name,price,quantity:1,kind}); }
+  renderCart();
+}
+function renderCart(){
+  const ul=$('#cart');
+  if(!cart.length){ ul.innerHTML='<li class="empty">Cart is empty</li>'; $('#cart-total').textContent='0.00'; $('#pay-btn').disabled=true; return; }
+  ul.innerHTML=''; let total=0;
+  cart.forEach((l,i)=>{ total+=l.price*l.quantity;
+    const li=document.createElement('li');
+    li.innerHTML=`<span class="name">${esc(l.name)}${l.kind==='wholesale'?' <span class="pill">W</span>':''}</span>
+      <input type="number" min="0" step="1" value="${l.quantity}" style="max-width:4.6rem" onchange="setQty(${i},this.value)">
+      <span class="price">${money(l.price*l.quantity)}</span>
+      <button class="mini" onclick="delLine(${i})">✕</button>`;
+    ul.appendChild(li); });
+  $('#cart-total').textContent=money(total); $('#pay-btn').disabled=false;
+}
+function setQty(i,v){ v=Number(v); if(v>0){ cart[i].quantity=v; } else { cart.splice(i,1); } renderCart(); }
+function delLine(i){ cart.splice(i,1); renderCart(); }
+async function checkout(){
+  try{ const res=await api('/api/sale',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({payment_method:$('#pay').value,lines:cart.map(l=>({item_id:l.item_id,quantity:l.quantity,kind:l.kind||'retail'}))})});
+    toast(`Sale #${res.id} — ${money(res.total)} ${res.currency}`); cart=[]; renderCart(); doSearch();
+  }catch(e){ toast('Error: '+e.message); }
+}
+async function aiParse(){
+  const text=$('#ai-text').value.trim(); if(!text){ return; }
+  $('#ai-note').textContent='parsing…';
+  try{ const res=await api('/api/parse',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text})});
+    for(const l of res.lines){ const ex=cart.find(c=>c.item_id===l.item_id);
+      if(ex){ ex.quantity+=l.quantity; } else { cart.push({item_id:l.item_id,name:l.name,price:l.unit_price,quantity:l.quantity}); } }
+    renderCart();
+    $('#ai-note').textContent = res.unresolved.length ? ('not found: '+res.unresolved.join(', ')) : ('added '+res.lines.length+' line(s)');
+    $('#ai-text').value='';
+  }catch(e){ $('#ai-note').textContent=''; toast('AI: '+e.message); }
+}
+
+// ---- Barcode ----
+async function scanEnter(){
+  const el=$('#barcode'); const code=el.value.trim(); if(!code) return; el.value='';
+  await addByBarcode(code);
+}
+async function addByBarcode(code){
+  try{ const it=await api('/api/barcode/'+encodeURIComponent(code)); addToCart(it); toast('Added '+it.name); }
+  catch(e){ toast('Unknown barcode — assign it in the Stock tab'); }
+}
+function cameraScan(){ scanCamera(addByBarcode); }
+function scanBarcodeInto(){ scanCamera(code=>{ $('#ni-barcode').value=code; lookupBarcode(); }); }
+
+async function scanCamera(onCode){
+  const hasBD = ('BarcodeDetector' in window);
+  const hasZX = !!(window.ZXing && window.ZXing.BrowserMultiFormatReader);
+  if(!hasBD && !hasZX){ toast('Barcode scanning not supported in this browser'); return; }
+
+  // ---- overlay: video + aiming frame + torch / zoom / cancel ----
+  const ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;background:#000;z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.8rem;padding:1rem';
+  const boxel=document.createElement('div'); boxel.style.cssText='position:relative;display:flex;max-width:100%;max-height:70vh';
+  const v=document.createElement('video'); v.autoplay=true; v.playsInline=true; v.muted=true; v.setAttribute('playsinline','');
+  v.style.cssText='max-width:100%;max-height:70vh;border-radius:12px;background:#000';
+  const frame=document.createElement('div');
+  frame.style.cssText='position:absolute;left:8%;right:8%;top:36%;height:28%;border:2px solid #82aaff;border-radius:10px;box-shadow:0 0 0 2000px rgba(0,0,0,.35);pointer-events:none';
+  boxel.append(v, frame);
+  const hint=document.createElement('div'); hint.textContent='Fill the blue box with the barcode · hold ~15 cm · tap the video to refocus';
+  hint.style.cssText='color:#fff;font-size:.86rem;text-align:center;opacity:.85;max-width:22rem';
+  const ctrls=document.createElement('div'); ctrls.style.cssText='display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;justify-content:center';
+  const torchBtn=document.createElement('button'); torchBtn.className='mini'; torchBtn.textContent='🔦 Light'; torchBtn.style.display='none';
+  const zoomWrap=document.createElement('label'); zoomWrap.style.cssText='display:none;align-items:center;gap:.4rem;color:#fff;font-size:.85rem';
+  const zoom=document.createElement('input'); zoom.type='range'; zoomWrap.append('🔍', zoom);
+  const cancel=document.createElement('button'); cancel.textContent='Cancel'; cancel.className='act';
+  ctrls.append(torchBtn, zoomWrap, cancel);
+  ov.append(boxel, hint, ctrls); document.body.appendChild(ov);
+
+  let done=false, zx=null, stream=null, track=null;
+  const stop=()=>{ if(done) return; done=true; try{ if(zx) zx.reset(); }catch(_){} if(stream){ stream.getTracks().forEach(t=>t.stop()); } ov.remove(); };
+  const hit=code=>{ if(done) return; try{ navigator.vibrate && navigator.vibrate(60); }catch(_){} stop(); onCode(code); };
+  cancel.onclick=stop;
+
+  // ---- open the rear camera at high resolution with continuous autofocus ----
+  const want={ video:{ facingMode:{ideal:'environment'}, width:{ideal:1920}, height:{ideal:1080},
+                        focusMode:{ideal:'continuous'}, advanced:[{focusMode:'continuous'}] } };
+  try{ stream=await navigator.mediaDevices.getUserMedia(want); }
+  catch(_){ try{ stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}}); }
+            catch(e){ toast('Camera blocked: '+e.message); stop(); return; } }
+  v.srcObject=stream; await v.play().catch(()=>{});
+  track=stream.getVideoTracks()[0];
+  const caps=(track && track.getCapabilities) ? track.getCapabilities() : {};
+  try{ if(caps.focusMode && caps.focusMode.includes('continuous')) await track.applyConstraints({advanced:[{focusMode:'continuous'}]}); }catch(_){}
+  // torch (where supported — Android)
+  if(caps.torch){ torchBtn.style.display=''; let on=false;
+    torchBtn.onclick=async()=>{ on=!on; try{ await track.applyConstraints({advanced:[{torch:on}]}); torchBtn.style.opacity=on?1:.65; }catch(_){} }; }
+  // zoom (where supported)
+  if(caps.zoom){ zoomWrap.style.display='flex'; zoom.min=caps.zoom.min; zoom.max=caps.zoom.max; zoom.step=caps.zoom.step||0.1;
+    zoom.value=Math.min(caps.zoom.max, (caps.zoom.min||1)*2);
+    const az=async()=>{ try{ await track.applyConstraints({advanced:[{zoom:parseFloat(zoom.value)}]}); }catch(_){} };
+    zoom.oninput=az; az(); }
+  // tap to refocus
+  v.onclick=async()=>{ try{ await track.applyConstraints({advanced:[{focusMode:'single-shot'}]}); }
+    catch(_){ try{ await track.applyConstraints({advanced:[{focusMode:'continuous'}]}); }catch(_){} } };
+
+  // ---- decode, limited to retail 1D barcode formats (faster + more reliable than "any format") ----
+  if(hasBD){
+    let det; const FMT=['ean_13','ean_8','upc_a','upc_e','code_128','code_39','itf'];
+    try{ det=new window.BarcodeDetector({formats:FMT}); }catch(_){ det=new window.BarcodeDetector(); }
+    const tick=async()=>{ if(done) return;
+      try{ const codes=await det.detect(v); if(codes && codes.length){ hit(codes[0].rawValue); return; } }catch(_){}
+      requestAnimationFrame(tick); };
+    tick();
+  } else {
+    try{
+      const ZX=window.ZXing, hints=new Map();
+      if(ZX.DecodeHintType && ZX.BarcodeFormat){
+        const F=ZX.BarcodeFormat;
+        hints.set(ZX.DecodeHintType.POSSIBLE_FORMATS, [F.EAN_13,F.EAN_8,F.UPC_A,F.UPC_E,F.CODE_128,F.CODE_39,F.ITF].filter(x=>x!=null));
+        hints.set(ZX.DecodeHintType.TRY_HARDER, true);
+      }
+      zx=new ZX.BrowserMultiFormatReader(hints, 250);
+      const cb=(result)=>{ if(result) hit(result.getText()); };
+      if(typeof zx.decodeFromStream==='function') zx.decodeFromStream(stream, v, cb);
+      else if(typeof zx.decodeFromVideoElement==='function') zx.decodeFromVideoElement(v, cb);
+      else zx.decodeFromConstraints(want, v, cb);
+    }catch(e){ toast('Scanner error: '+e.message); stop(); }
+  }
+}
+
+// ---- Images ----
+const imgSrc = id => `/api/images/${id}?token=${encodeURIComponent(TOKEN)}`;
+const itemThumbSrc = id => `/api/items/${id}/image?token=${encodeURIComponent(TOKEN)}`;
+// Thumbnail (or a placeholder box). Tapping opens the item's photo gallery.
+const thumb = it => it.has_image
+  ? `<img class="thumb tap" src="${itemThumbSrc(it.id)}" alt="" onclick="event.stopPropagation();openGallery(${it.id},'${esc(it.name)}')">`
+  : `<span class="thumb-ph" onclick="event.stopPropagation();openGallery(${it.id},'${esc(it.name)}')" title="add a photo">📦</span>`;
+
+function resizeDataURL(file,max,q){
+  return new Promise((res,rej)=>{ const img=new Image(), url=URL.createObjectURL(file);
+    img.onload=()=>{ URL.revokeObjectURL(url); let w=img.width,h=img.height;
+      if(w>=h && w>max){ h=Math.round(h*max/w); w=max; } else if(h>max){ w=Math.round(w*max/h); h=max; }
+      const c=document.createElement('canvas'); c.width=w; c.height=h; c.getContext('2d').drawImage(img,0,0,w,h);
+      res(c.toDataURL('image/jpeg',q)); };
+    img.onerror=rej; img.src=url; });
+}
+// Add one or MORE photos to an existing item (from Stock or the gallery).
+function pickImage(id, done){
+  const inp=document.createElement('input'); inp.type='file'; inp.accept='image/*'; inp.capture='environment'; inp.multiple=true;
+  inp.onchange=async()=>{ const files=[...(inp.files||[])]; if(!files.length) return;
+    let ok=0;
+    for(const f of files){ try{ await uploadImage(id, await resizeDataURL(f,1200,0.82)); ok++; }catch(_){ toast('Could not read an image'); } }
+    if(ok) toast(ok>1?ok+' photos saved':'Photo saved');
+    if(done) done(); else loadStock();
+  };
+  inp.click();
+}
+async function uploadImage(id,dataURL){
+  const b64=dataURL.split(',')[1];
+  return api('/api/items/'+id+'/image',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data:b64,content_type:'image/jpeg'})});
+}
+
+// ---- Photo gallery: view / add / delete all of an item's photos ----
+async function openGallery(id,name){
+  let imgs=[];
+  try{ imgs=await api('/api/items/'+id+'/images'); }catch(e){ toast('Error: '+e.message); return; }
+  const ov=document.createElement('div'); ov.className='modal-ov';
+  const card=document.createElement('div'); card.className='modal-card';
+  const render=()=>{
+    let cells = imgs.length ? '' : '<span class="empty">No photos yet — add one below</span>';
+    imgs.forEach((im,i)=>{ cells+=`<div class="cell"><img src="${imgSrc(im.id)}" alt="" onclick="__lb(${i})">
+        <button class="x" title="delete" onclick="__delImg(${im.id})">✕</button></div>`; });
+    card.innerHTML=`<h2 style="text-transform:none;font-size:1.05rem;color:var(--ink);letter-spacing:0">📷 ${esc(name)}</h2>
+      <div class="gallery">${cells}</div>
+      <div class="row"><button class="mini" id="g-add">＋ Add photo</button>
+        <button class="mini" id="g-close" style="margin-left:auto">Close</button></div>`;
+    card.querySelector('#g-add').onclick=()=>pickImage(id, async()=>{ imgs=await api('/api/items/'+id+'/images'); render(); refreshLists(); });
+    card.querySelector('#g-close').onclick=()=>ov.remove();
+  };
+  window.__lb=(i)=>openLightbox(imgs.map(m=>imgSrc(m.id)), i);
+  window.__delImg=async(imgId)=>{ if(!confirm('Delete this photo?')) return;
+    try{ await api('/api/images/'+imgId,{method:'DELETE'}); imgs=imgs.filter(m=>m.id!==imgId); render(); refreshLists(); }
+    catch(e){ toast('Error: '+e.message); } };
+  render(); ov.appendChild(card); ov.onclick=e=>{ if(e.target===ov) ov.remove(); }; document.body.appendChild(ov);
+}
+// refresh whichever list is on screen so thumbnails update after photo changes
+function refreshLists(){ const v=currentView; if(v==='stock') loadStock(); else if(v==='cats') loadCats(); else if(v==='dash') loadDash(); }
+
+// ---- Fullscreen lightbox (swipe / arrows to move between photos) ----
+function openLightbox(srcs, idx){
+  if(!srcs || !srcs.length) return; let i=idx||0;
+  const lb=document.createElement('div'); lb.className='lightbox';
+  const img=document.createElement('img'); lb.appendChild(img);
+  const count=document.createElement('div'); count.className='count'; lb.appendChild(count);
+  const upd=()=>{ img.src=srcs[i]; count.textContent=(i+1)+' / '+srcs.length; count.style.display=srcs.length>1?'':'none'; };
+  const close=document.createElement('button'); close.className='close'; close.textContent='✕'; close.onclick=()=>lb.remove(); lb.appendChild(close);
+  if(srcs.length>1){
+    const p=document.createElement('button'); p.className='nav prev'; p.textContent='‹';
+    const n=document.createElement('button'); n.className='nav next'; n.textContent='›';
+    p.onclick=e=>{ e.stopPropagation(); i=(i-1+srcs.length)%srcs.length; upd(); };
+    n.onclick=e=>{ e.stopPropagation(); i=(i+1)%srcs.length; upd(); };
+    lb.appendChild(p); lb.appendChild(n);
+    let sx=0; lb.addEventListener('touchstart',e=>{ sx=e.touches[0].clientX; },{passive:true});
+    lb.addEventListener('touchend',e=>{ const dx=e.changedTouches[0].clientX-sx;
+      if(Math.abs(dx)>40){ i=(dx<0? i+1 : i-1+srcs.length)%srcs.length; upd(); } });
+  }
+  lb.onclick=e=>{ if(e.target===lb) lb.remove(); };
+  upd(); document.body.appendChild(lb);
+}
+
+// ---- Photos attached while adding a NEW item (uploaded after it's created) ----
+let newItemPhotos=[];
+function pickImageForNew(){
+  const inp=document.createElement('input'); inp.type='file'; inp.accept='image/*'; inp.capture='environment'; inp.multiple=true;
+  inp.onchange=async()=>{ const files=[...(inp.files||[])];
+    for(const f of files){ try{ newItemPhotos.push(await resizeDataURL(f,1200,0.82)); }catch(_){ toast('Could not read an image'); } }
+    renderNewPhotos(); };
+  inp.click();
+}
+function renderNewPhotos(){
+  const box=$('#ni-photos'); if(!box) return;
+  box.innerHTML=newItemPhotos.map((u,i)=>`<div class="cell"><img src="${u}" alt="" onclick="openLightbox(newItemPhotos,${i})"><button class="x" onclick="event.stopPropagation();rmNewPhoto(${i})">✕</button></div>`).join('');
+  const n=$('#ni-photo-note'); if(n) n.textContent=newItemPhotos.length?newItemPhotos.length+' attached':'you can add several';
+}
+function rmNewPhoto(i){ newItemPhotos.splice(i,1); renderNewPhotos(); }
+function clearNewPhoto(){ newItemPhotos=[]; renderNewPhotos(); }
+
+// ---- Stock: fast deterministic add ----
+async function fastAdd(){
+  const text=$('#fast-input').value.trim(); if(!text) return;
+  $('#fast-note').textContent='importing…';
+  try{
+    const r=await api('/api/import',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text})});
+    let msg='Imported '+r.created.length;
+    if(r.errors.length) msg+=' · '+r.errors.length+' skipped (row '+r.errors.map(e=>e.row).join(', ')+')';
+    $('#fast-note').textContent=msg;
+    if(!r.errors.length){ $('#fast-input').value=''; const f=$('#import-file'); if(f) f.value=''; }
+    loadStock();
+  }catch(e){ $('#fast-note').textContent=''; toast('Error: '+e.message); }
+}
+function loadImportFile(){
+  const f=$('#import-file').files && $('#import-file').files[0]; if(!f) return;
+  const rd=new FileReader();
+  rd.onload=()=>{ $('#fast-input').value=rd.result; $('#fast-note').textContent='loaded '+f.name+' — tap “Import all”'; };
+  rd.readAsText(f);
+}
+function downloadTemplate(){
+  const csv='brand,size,name,retail,wholesale,cost,qty,category,supplier,barcode\nKaiserdom,500ml,Kaiserdom 500ml,6000,,,0,beer,,\nCoke,330ml,Coke 330ml,1.75,1.40,1.10,24,drinks,ABC,\n';
+  const a=document.createElement('a'); a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download='shopkeeper-template.csv'; document.body.appendChild(a); a.click(); a.remove();
+}
+
+// ---- Stock: AI add ----
+async function aiParseItems(){
+  const text=$('#ai-items').value.trim(); if(!text) return;
+  $('#ai-items-note').textContent='parsing… (first call may take a moment)';
+  try{
+    const res=await api('/api/parse-catalog',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text})});
+    renderDrafts(res.items);
+    $('#ai-items-note').textContent = res.items.length ? 'review & edit below, then Save' : 'nothing recognised';
+  }catch(e){ $('#ai-items-note').textContent=''; toast('AI: '+e.message); }
+}
+function draftInput(f, val, ph, extra){ return `<input placeholder="${ph}" value="${val==null?'':esc(String(val))}" data-f="${f}" ${extra||''}>`; }
+function renderDrafts(items){
+  const box=$('#ai-drafts'); box.innerHTML='';
+  if(!items.length) return;
+  items.forEach(it=>{
+    const d=document.createElement('div'); d.style.cssText='border:1px solid var(--line);border-radius:10px;padding:.6rem;margin:.5rem 0';
+    d.innerHTML=`
+      ${draftInput('name', it.name, 'name', 'style="margin-bottom:.3rem"')}
+      <div class="row" style="margin-bottom:.3rem">${draftInput('category', it.category, 'category')}${draftInput('unit', it.unit==null?'each':it.unit, 'unit', 'style="max-width:6rem"')}</div>
+      <div class="row" style="margin-bottom:.3rem">${draftInput('retail', it.retail, 'retail', 'inputmode="decimal"')}${draftInput('wholesale', it.wholesale, 'wholesale', 'inputmode="decimal"')}</div>
+      <div class="row" style="margin-bottom:.3rem">${draftInput('cost', it.cost, 'cost', 'inputmode="decimal"')}${draftInput('stock', it.stock, 'stock', 'inputmode="decimal"')}</div>
+      <div class="row">${draftInput('supplier', it.supplier, 'supplier')}<button class="act" data-save>Save</button></div>`;
+    d.querySelector('[data-save]').onclick=async()=>{
+      const body={}; d.querySelectorAll('[data-f]').forEach(el=>{ const v=el.value.trim(); if(v) body[el.dataset.f]=v; });
+      if(!body.name){ toast('Name required'); return; }
+      try{ await api('/api/items',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+        toast('Saved '+body.name); d.remove(); loadStock();
+        if(!box.querySelector('[data-save]')){ box.innerHTML=''; $('#ai-items').value=''; $('#ai-items-note').textContent=''; }
+      }catch(e){ toast('Error: '+e.message); }
+    };
+    box.appendChild(d);
+  });
+  const all=document.createElement('button'); all.className='act'; all.textContent='Save all'; all.style.marginTop='.3rem';
+  all.onclick=()=>{ box.querySelectorAll('[data-save]').forEach(b=>b.click()); };
+  box.appendChild(all);
+}
+
+// ---- Stock ----
+async function deleteItem(id, name){
+  if(!confirm('Delete "'+name+'" permanently? This removes the item, its prices and photo.')) return;
+  try{ await api('/api/items/'+id,{method:'DELETE'}); toast('Deleted '+name); loadStock(); }
+  catch(e){ toast('Error: '+e.message); }
+}
+async function openOptions(id, name, currency){
+  currency = currency || 'USD';
+  let opts=[];
+  try{ opts=await api('/api/items/'+id+'/options'); }catch(e){ toast('Error: '+e.message); return; }
+  const ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:25;display:flex;align-items:center;justify-content:center;padding:1rem';
+  const card=document.createElement('div'); card.className='card'; card.style.cssText='max-width:26rem;width:100%;max-height:85vh;overflow:auto';
+  const render=()=>{
+    let rows = opts.length ? '' : '<li class="empty">no options yet</li>';
+    for(const o of opts){
+      rows+=`<li><span class="name">${esc(o.name)}</span><span class="muted">${o.amount!=1?('×'+money(o.amount)):'single'}</span>
+        <span class="price">${fmt(o.price,o.currency||currency)}</span>
+        <button class="mini" style="color:var(--warn)" onclick="delOption(${o.id},this)">✕</button></li>`;
+    }
+    card.innerHTML=`<h2>Options — ${esc(name)}</h2>
+      <div class="muted" style="margin-bottom:.3rem">separate from retail/wholesale · e.g. Cold, Normal, Set(24)</div>
+      <ul>${rows}</ul>
+      <div class="row" style="margin:.6rem 0 .3rem"><input id="o-name" placeholder="name (Cold)"><input id="o-amt" placeholder="units" inputmode="decimal" value="1" style="max-width:5rem"></div>
+      <div class="row"><input id="o-price" placeholder="price" inputmode="decimal">
+        <select id="o-currency" style="max-width:6rem">
+          <option value="KHR"${currency==='KHR'?' selected':''}>Riel ៛</option>
+          <option value="USD"${currency==='USD'?' selected':''}>USD $</option>
+        </select>
+        <button class="act" id="o-add">Add</button></div>
+      <div class="row" style="margin-top:.6rem"><button class="mini" id="o-close" style="margin-left:auto">Close</button></div>`;
+    card.querySelector('#o-add').onclick=async()=>{
+      const nm=card.querySelector('#o-name').value.trim(), pr=card.querySelector('#o-price').value.trim(), am=card.querySelector('#o-amt').value.trim()||'1';
+      const cur=card.querySelector('#o-currency').value;
+      if(!nm||!pr){ toast('name and price needed'); return; }
+      try{ const o=await api('/api/items/'+id+'/options',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:nm,price:pr,amount:am,currency:cur})}); opts.push(o); render(); }
+      catch(e){ toast('Error: '+e.message); }
+    };
+    card.querySelector('#o-close').onclick=()=>ov.remove();
+  };
+  window.delOption=async(oid,btn)=>{ try{ await api('/api/options/'+oid,{method:'DELETE'}); opts=opts.filter(x=>x.id!==oid); render(); }catch(e){ toast('Error: '+e.message); } };
+  render(); ov.appendChild(card); ov.onclick=e=>{ if(e.target===ov) ov.remove(); }; document.body.appendChild(ov);
+}
+async function setBarcode(id){
+  const code=prompt('Scan or type a barcode for this item:'); if(!code||!code.trim()) return;
+  try{ await api('/api/items/'+id+'/barcode',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({barcode:code.trim()})});
+    toast('Barcode set'); loadStock();
+  }catch(e){ toast('Error: '+e.message); }
+}
+// the middle descriptor of a looked-up product = name minus the brand and size (+ tidy junk)
+function barcodeMiddle(r){
+  let s=(r.name||'').trim();
+  if(r.brand){ const i=s.toLowerCase().indexOf(r.brand.toLowerCase()); if(i>=0) s=s.slice(0,i)+s.slice(i+r.brand.length); }
+  if(r.size){ s=s.replace(new RegExp(r.size.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'ig'),''); }
+  return s.replace(/\b(bottle|can|pack of \d+|case of \d+|\d+\s?cl|\d+\s?x\s?\d+|x\s?\d+)\b/ig,'')
+          .replace(/[-–|,]+/g,' ').replace(/\s{2,}/g,' ').trim();
+}
+async function lookupBarcode(){
+  const code=$('#ni-barcode').value.trim(); if(!code) return;
+  toast('Looking up '+code+'…');
+  try{
+    const r=await api('/api/lookup-barcode/'+encodeURIComponent(code));
+    if(r.in_catalog){ toast('Already in catalogue: '+r.item.name); $('#ni-retail').focus(); return; }
+    if(r.found){
+      if(r.brand) $('#ni-brand').value=r.brand;
+      if(r.size)  $('#ni-size').value=r.size;
+      $('#ni-name').value=barcodeMiddle(r);
+      toast('Found: '+r.name+' — check it & add your price'); $('#ni-retail').focus();
+    } else { toast('Not found in product databases — type it in'); $('#ni-brand').focus(); }
+  }catch(e){ toast('Lookup needs internet: '+e.message); }
+}
+function toggleWholesale(){ const s=$('#ni-wsec'), c=$('#ni-wsec-caret'); const open=s.style.display==='none'; s.style.display=open?'':'none'; if(c) c.textContent=open?'▾':'▸'; }
+function toggleDrink(){ const s=$('#ni-dsec'), c=$('#ni-dsec-caret'); const open=s.style.display==='none'; s.style.display=open?'':'none'; if(c) c.textContent=open?'▾':'▸'; }
+// ---- Add mode: General vs premium Alcohol (beer stays General) ----
+const ALC_TYPES=['Wine','Champagne','Whisky','Vodka','Rum','Gin','Brandy','Tequila','Cognac','Liqueur','Sake','Soju','Spirits'];
+let addMode='general';
+function drinkSection(open){ const d=$('#ni-dsec'), c=$('#ni-dsec-caret'); if(d) d.style.display=open?'':'none'; if(c) c.textContent=open?'▾':'▸'; }
+function setAddMode(m){
+  addMode=m; const alc=m==='alcohol';
+  $('#am-general').classList.toggle('active', !alc);
+  $('#am-alcohol').classList.toggle('active', alc);
+  const t=$('#add-title'); if(t) t.textContent = alc ? '🍷 Add alcohol' : '＋ Add item';
+  const at=$('#alc-types');
+  if(at){ at.style.display = alc?'':'none';
+    if(alc && !at.dataset.filled){ at.innerHTML=ALC_TYPES.map(x=>`<button class="chip" onclick="pickAlcType('${x}')">${x}</button>`).join(''); at.dataset.filled='1'; } }
+  drinkSection(alc);                                  // premium alcohol => show drink info up front
+  refreshDatalists();                                 // suggestions from only this mode's items
+  const b=$('#ni-brand'); if(b) b.focus();
+}
+function pickAlcType(t){
+  const c=$('#ni-category'); if(c) c.value=t.toLowerCase();
+  document.querySelectorAll('#alc-types .chip').forEach(b=>b.classList.toggle('active', b.textContent===t));
+}
+function drinkLineCompact(it){ return [it.style, it.vintage].filter(Boolean).join(' · '); }
+// compact drink-info line, e.g. "14.5% · 2022 · Shiraz · Coonawarra"
+function drinkLine(it){
+  const p=[];
+  if(it.abv!=null) p.push(it.abv+'%');
+  if(it.vintage) p.push(it.vintage);
+  if(it.style) p.push(esc(it.style));
+  if(it.origin) p.push(esc(it.origin));
+  return p.join(' · ');
+}
+async function editInfo(id){
+  let it; try{ it=(await api('/api/items')).find(x=>x.id===id); }catch(e){ toast('Error: '+e.message); return; }
+  if(!it) return;
+  const abv=prompt('ABV % (blank = none):', it.abv??''); if(abv===null) return;
+  const vintage=prompt('Vintage / year:', it.vintage??''); if(vintage===null) return;
+  const style=prompt('Style / varietal:', it.style??''); if(style===null) return;
+  const origin=prompt('Origin / region:', it.origin??''); if(origin===null) return;
+  try{ await api('/api/items/'+id+'/info',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({abv:abv.trim()||null, vintage:vintage.trim()?parseInt(vintage,10):null,
+                             style:style.trim()||null, origin:origin.trim()||null})});
+    toast('Info updated'); loadStock();
+  }catch(e){ toast('Error: '+e.message); }
+}
+function addOptRow(){
+  const box=$('#ni-opts'); const row=document.createElement('div'); row.className='row opt-row'; row.style.marginBottom='.4rem';
+  row.innerHTML=`<input class="o-name" placeholder="option (Cold)"><input class="o-amt" placeholder="units" inputmode="decimal" value="1" style="max-width:4.5rem"><input class="o-price" placeholder="price" inputmode="decimal" style="max-width:5.5rem"><button class="mini" onclick="this.parentElement.remove()">✕</button>`;
+  box.appendChild(row);
+}
+// Return the Add-item form to a pristine blank state.
+function resetAddForm(){
+  for(const id of ['ni-brand','ni-name','ni-size','ni-retail','ni-pack','ni-wholesale','ni-cost','ni-barcode','ni-category','ni-supplier','ni-abv','ni-vintage','ni-style','ni-origin']){
+    const el=$('#'+id); if(el) el.value='';
+  }
+  const u=$('#ni-unit'); if(u) u.value='single';   // default unit back to single
+  ['ni-currency','ni-pack-cur','ni-wholesale-cur','ni-cost-cur'].forEach(id=>{ const s=$('#'+id); if(s) s.selectedIndex=0; });  // all back to Riel
+  $('#ni-opts').innerHTML=''; clearNewPhoto();
+  const w=$('#ni-wsec'); if(w) w.style.display='none';        // collapse pack/wholesale/cost
+  const c=$('#ni-wsec-caret'); if(c) c.textContent='▸';
+  drinkSection(addMode==='alcohol');                          // keep drink info open in Alcohol mode
+  document.querySelectorAll('#alc-types .chip').forEach(b=>b.classList.remove('active'));
+  const b=$('#ni-brand'); if(b) b.focus();
+}
+async function addItem(){
+  const brand=$('#ni-brand').value.trim(), option=$('#ni-name').value.trim(), size=$('#ni-size').value.trim();
+  const name=[brand, option, size].filter(Boolean).join(' ');   // brand · option · size
+  if(!name){ toast('Enter at least a brand or name'); return; }
+  if(knownItems.some(x=>(x.name||'').toLowerCase()===name.toLowerCase())
+     && !confirm('“'+name+'” already exists. Add it again anyway?')) return;
+  const currency=$('#ni-currency').value;
+  const body={ name, brand:brand||null, size:size||null, currency,
+    category: $('#ni-category').value.trim()||null,
+    unit: $('#ni-unit').value.trim()||'each',
+    supplier: $('#ni-supplier').value.trim()||null,
+    barcode: $('#ni-barcode').value.trim()||null };
+  const retail=$('#ni-retail').value.trim(), pack=$('#ni-pack').value.trim(),
+        wholesale=$('#ni-wholesale').value.trim(), cost=$('#ni-cost').value.trim();
+  if(retail) body.retail=retail;
+  if(pack){ body.pack=pack; body.pack_currency=$('#ni-pack-cur').value; }
+  if(wholesale){ body.wholesale=wholesale; body.wholesale_currency=$('#ni-wholesale-cur').value; }
+  if(cost){ body.cost=cost; body.cost_currency=$('#ni-cost-cur').value; }
+  const abv=$('#ni-abv').value.trim(), vintage=$('#ni-vintage').value.trim(),
+        style=$('#ni-style').value.trim(), origin=$('#ni-origin').value.trim();
+  if(abv) body.abv=abv.replace('%','').trim();
+  if(vintage) body.vintage=parseInt(vintage,10)||null;
+  if(style) body.style=style;
+  if(origin) body.origin=origin;
+  // Flag as alcohol from the mode, or as a safety net an alcohol category / drink info.
+  body.is_alcohol = addMode==='alcohol' || ALC_CATS.has((body.category||'').toLowerCase().trim()) || !!(abv||vintage||style||origin);
+  const optRows=[...document.querySelectorAll('#ni-opts .opt-row')].map(r=>({
+    name:r.querySelector('.o-name').value.trim(), amount:r.querySelector('.o-amt').value.trim()||'1',
+    price:r.querySelector('.o-price').value.trim(), currency})).filter(o=>o.name&&o.price);
+  try{ const created=await api('/api/items',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    if(created && created.id){
+      for(const u of newItemPhotos){ try{ await uploadImage(created.id, u); }catch(_){} }
+      for(const o of optRows){ try{ await api('/api/items/'+created.id+'/options',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(o)}); }catch(_){} }
+    }
+    // Keep category / unit / supplier / currency for fast successive entry; clear the rest.
+    resetAddForm();          // blank slate after every add
+    toast('Added '+name); loadStock();
+  }catch(e){ toast('Error: '+e.message); }
+}
+let stockItems=[], stockCat='__all';
+async function loadStock(){
+  stockItems = await api('/api/items'); populateDatalists(stockItems);
+  renderStockChips(); renderStock();
+}
+function renderStockChips(){
+  const chips=$('#stock-cat-chips'); if(!chips) return;
+  const cats=[...new Set(stockItems.map(i=>i.category||'—'))].sort((a,b)=>a.localeCompare(b));
+  if(stockCat!=='__all' && !cats.includes(stockCat)) stockCat='__all';
+  const count=c=>stockItems.filter(i=>(i.category||'—')===c).length;
+  const mk=(v,l,n)=>`<button class="chip${stockCat===v?' active':''}" data-cat="${esc(v)}" onclick="pickStockCategory(this.dataset.cat)">${esc(l)}<span class="chip-n">${n}</span></button>`;
+  chips.innerHTML = mk('__all','All',stockItems.length) + cats.map(c=>mk(c,c,count(c))).join('');
+}
+function pickStockCategory(c){ stockCat=c;
+  document.querySelectorAll('#stock-cat-chips .chip').forEach(b=>b.classList.toggle('active', b.dataset.cat===c));
+  const act=document.querySelector('#stock-cat-chips .chip.active'); if(act) act.scrollIntoView({inline:'center',block:'nearest'});
+  renderStock();
+}
+function renderStock(){
+  const ul=$('#stock-list');
+  const items = stockCat==='__all' ? stockItems : stockItems.filter(i=>(i.category||'—')===stockCat);
+  if(!items.length){ ul.innerHTML='<li class="empty">'+(stockItems.length?'No items in this category':'No items yet — add one above')+'</li>'; return; }
+  ul.innerHTML=''; let cat=null;
+  for(const it of items){
+    const c = it.category || '—';
+    if(c!==cat){ cat=c; const h=document.createElement('li'); h.style.borderBottom='none';
+      h.innerHTML=`<span class="muted" style="text-transform:uppercase;letter-spacing:.04em">${esc(cat)}</span>`;
+      ul.appendChild(h); }
+    const li=document.createElement('li'); li.style.flexWrap='wrap';
+    const m = it.margin!=null ? ` · margin ${fmt(it.margin,it.currency)}` : '';
+    li.innerHTML=`<div style="flex:1 1 100%">
+        ${thumb(it)}<span class="name">${itemLabel(it)}</span>
+        <span class="muted">${money(it.quantity_on_hand)} ${esc(it.unit)}${it.supplier?' · '+esc(it.supplier):''}</span></div>
+      <div style="flex:1 1 100%" class="muted">single ${fmt(it.retail,it.currency)}${it.pack!=null?' · pack '+fmt(it.pack,it.currency):''} · wholesale ${fmt(it.wholesale,it.currency)} · cost ${fmt(it.cost,it.currency)}${m}</div>
+      ${drinkLine(it)?`<div style="flex:1 1 100%" class="muted">🍷 ${drinkLine(it)}</div>`:''}
+      <input type="number" placeholder="+qty" inputmode="decimal" style="max-width:4.5rem" id="rs-${it.id}">
+      <button class="mini" onclick="restock(${it.id})">restock</button>
+      <button class="mini" onclick="setPrices(${it.id},'${esc(it.name)}')">prices</button>
+      <button class="mini" onclick="openOptions(${it.id},'${esc(it.name)}','${it.currency}')">options</button>
+      <button class="mini" onclick="setBarcode(${it.id})">barcode</button>
+      <button class="mini" onclick="openGallery(${it.id},'${esc(it.name)}')">📷 photos</button>
+      <button class="mini" onclick="editNaming(${it.id})">✎ edit</button>
+      <button class="mini" onclick="editInfo(${it.id})">🍷 info</button>
+      <button class="mini" onclick="deleteItem(${it.id},'${esc(it.name)}')" style="color:var(--warn)">delete</button>`;
+    ul.appendChild(li);
+  }
+}
+async function restock(id){
+  const el=$('#rs-'+id), q=el.value.trim(); if(!q){ return; }
+  try{ const it=await api('/api/items/'+id+'/restock',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({quantity:q})});
+    toast(`${it.name}: now ${money(it.quantity_on_hand)} ${it.unit}`); loadStock();
+  }catch(e){ toast('Error: '+e.message); }
+}
+async function setPrices(id,name){
+  for(const kind of ['retail','pack','wholesale','cost']){
+    const v=prompt(`${kind} price for ${name} (blank = keep):`);
+    if(v && v.trim()){
+      try{ await api('/api/items/'+id+'/price',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({price:v.trim(),kind})}); }
+      catch(e){ toast('Error ('+kind+'): '+e.message); }
+    }
+  }
+  toast('Prices updated'); loadStock();
+}
+
+// ---- Categories ----
+function toggleCat(el){ const ul=el.parentElement.querySelector('.cat-items'); if(ul) ul.style.display = ul.style.display==='none'?'':'none'; }
+async function loadCats(){
+  const items = await api('/api/items'); const box=$('#cats');
+  if(!items.length){ box.innerHTML='<div class="empty">No items yet</div>'; return; }
+  const groups={};
+  for(const it of items){ const c=it.category||'—'; (groups[c]=groups[c]||[]).push(it); }
+  const cats=Object.keys(groups).sort((a,b)=>a.localeCompare(b));
+  box.innerHTML='';
+  for(const c of cats){
+    const list=groups[c];
+    const stock=list.reduce((s,i)=>s+(i.quantity_on_hand||0),0);
+    const retailVal=list.reduce((s,i)=>s+((i.retail||0)*(i.quantity_on_hand||0)),0);
+    const costVal=list.reduce((s,i)=>s+((i.cost||0)*(i.quantity_on_hand||0)),0);
+    const curs=new Set(list.map(i=>i.currency)); const cc=curs.size===1?[...curs][0]:null;
+    const val=v=> cc?fmt(v,cc):money(v);
+    let itemsHtml='';
+    for(const it of list){
+      itemsHtml+=`<li>${thumb(it)}<span class="name">${itemLabel(it)}</span>
+        <span class="muted">${money(it.quantity_on_hand)} ${esc(it.unit)}</span>
+        <span class="price">${fmt(it.retail,it.currency)}</span>
+        <button class="mini" onclick="deleteItem(${it.id},'${esc(it.name)}')" style="color:var(--warn)">delete</button></li>`;
+    }
+    const d=document.createElement('div'); d.style.cssText='border:1px solid var(--line);border-radius:10px;padding:.6rem;margin:.5rem 0';
+    d.innerHTML=`<div class="row" onclick="toggleCat(this)" style="cursor:pointer">
+        <span class="name">${esc(c)}</span>
+        <span class="muted" style="margin-left:auto">${list.length} item(s) · stock ${money(stock)}</span></div>
+      <div class="row muted" style="margin-top:.2rem"><span>retail value ${val(retailVal)} · cost value ${val(costVal)}</span>
+        <button class="mini" onclick="renameCategory('${esc(c)}')" style="margin-left:auto">rename</button></div>
+      <ul class="cat-items" style="display:none;margin-top:.4rem">${itemsHtml}</ul>`;
+    box.appendChild(d);
+  }
+}
+async function renameCategory(c){
+  const nn=prompt('Rename/merge category "'+c+'" to (type an existing category to merge):', c==='—'?'':c);
+  if(nn==null) return; const nw=nn.trim(); if(!nw){ toast('Name required'); return; } if(nw===c) return;
+  try{ const r=await api('/api/categories/rename',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({old_name:c==='—'?null:c,new:nw})});
+    toast('Moved '+r.moved+' item(s) to "'+nw+'"'); loadCats();
+  }catch(e){ toast('Error: '+e.message); }
+}
+
+// ---- Dashboard ----
+// ---- structured naming: brand (colored) · option · size chip ----
+const BRAND_COLORS=['#82aaff','#c3e88d','#c099ff','#86e1fc','#ff966c','#ffc777','#ff757f','#4fd6be','#fca7ea','#65bcff'];
+function brandColor(b){ if(!b) return 'var(--muted)'; let h=0; for(let i=0;i<b.length;i++) h=(h*31+b.charCodeAt(i))>>>0; return BRAND_COLORS[h%BRAND_COLORS.length]; }
+// the middle part = full name minus a leading quantity, the brand token, and the size token
+function itemMid(it){
+  let toks=(it.name||'').split(/\s+/);
+  while(toks.length && /^\d+x?$/i.test(toks[0])) toks.shift();
+  if(it.brand){ const i=toks.findIndex(t=>t.toLowerCase()===it.brand.toLowerCase()); if(i>=0) toks.splice(i,1); }
+  if(it.size){ const i=toks.findIndex(t=>t.toLowerCase()===it.size.toLowerCase()); if(i>=0) toks.splice(i,1); }
+  return toks.join(' ');
+}
+function itemLabel(it){
+  const b=it.brand||'', s=it.size||'';
+  if(!b && !s) return `<span class="nm-mid">${esc(it.name)}</span>`;
+  const mid=itemMid(it);
+  return (b?`<span class="brand-tag" style="color:${brandColor(b)}">${esc(b)}</span>`:'')
+       + (mid?` <span class="nm-mid">${esc(mid)}</span>`:'')
+       + (s?` <span class="szchip">${esc(s)}</span>`:'');
+}
+async function editNaming(id){
+  let it; try{ it=(await api('/api/items')).find(x=>x.id===id); }catch(e){ toast('Error: '+e.message); return; }
+  if(!it) return;
+  const brand=prompt('Brand:', it.brand||''); if(brand===null) return;
+  const option=prompt('Option / middle (e.g. crystal) — optional:', itemMid(it)); if(option===null) return;
+  const size=prompt('Size (e.g. 500ml, 250g) — optional:', it.size||''); if(size===null) return;
+  const category=prompt('Category:', it.category||''); if(category===null) return;
+  const name=[brand.trim(),option.trim(),size.trim()].filter(Boolean).join(' ');
+  if(!name){ toast('Name required'); return; }
+  try{ await api('/api/items/'+id+'/meta',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({name, brand:brand.trim()||null, size:size.trim()||null, category:category.trim()||null})});
+    toast('Updated'); loadStock();
+  }catch(e){ toast('Error: '+e.message); }
+}
+// Autocomplete sources + known-items cache (for fast entry + duplicate detection).
+let allItems=[], knownItems=[];
+// Alcohol categories (broad) used as a fallback when the explicit flag isn't set.
+const ALC_CATS=new Set(['wine','red wine','white wine','rose','rosé','sparkling','champagne','prosecco',
+  'whisky','whiskey','bourbon','scotch','vodka','rum','gin','brandy','tequila','mezcal','cognac','liqueur',
+  'sake','soju','baijiu','rice wine','spirits','spirit','port','sherry','vermouth']);
+// Premium alcohol = the explicit flag, OR drink info, OR an alcohol category.
+// Beer is none of these, so beer always stays "general".
+function isAlcohol(it){
+  if(it.is_alcohol) return true;
+  if(it.style || it.vintage || it.abv || it.origin) return true;
+  return ALC_CATS.has((it.category||'').toLowerCase().trim());
+}
+function populateDatalists(items){ allItems = items || []; knownItems = allItems; refreshDatalists(); }
+// Fill the autocomplete lists from ONLY the current mode's items (alcohol vs general).
+function refreshDatalists(){
+  const src = (addMode==='alcohol') ? allItems.filter(isAlcohol) : allItems.filter(i=>!isAlcohol(i));
+  const fill=(id,vals)=>{ const dl=document.getElementById(id); if(!dl) return;
+    dl.innerHTML=[...new Set(vals.filter(Boolean).map(v=>String(v).trim()))].sort((a,b)=>a.localeCompare(b))
+      .map(v=>`<option value="${esc(v)}">`).join(''); };
+  fill('dl-brand', src.map(i=>i.brand));
+  fill('dl-option', src.map(itemMid));
+  fill('dl-size', src.map(i=>i.size));
+  fill('dl-category', src.map(i=>i.category));
+  fill('dl-supplier', src.map(i=>i.supplier));
+  fill('dl-style', src.map(i=>i.style));
+  fill('dl-origin', src.map(i=>i.origin));
+}
+// one Dash catalog card (photo + name open gallery; price is tap-to-edit)
+const prodCard = it => {
+  const media = it.has_image ? `<img class="ph" src="${itemThumbSrc(it.id)}" alt="">` : `<div class="noimg">📦</div>`;
+  return `<div class="prod"><div onclick="openGallery(${it.id},'${esc(it.name)}')">${media}</div>
+    <div class="body"><div class="nm" onclick="openGallery(${it.id},'${esc(it.name)}')">${itemLabel(it)}</div>
+      <div class="pr" title="tap to edit" data-raw="${it.retail??''}"
+           onclick="editCatPrice(event,${it.id},'${it.currency}',this)">${fmt(it.retail,it.currency)} ✎</div>
+      ${drinkLineCompact(it)?`<div class="muted" style="font-size:.72rem;margin-top:.15rem;line-height:1.25">🍷 ${drinkLineCompact(it)}</div>`:''}</div></div>`;
+};
+// Catalog sorting. Prices can be in KHR or USD, so for a meaningful low→high across
+// both we compare a rough USD-equivalent (display is never converted).
+let dashItems=[];
+const RIEL_PER_USD=4100;   // approximate; only used to order mixed-currency prices
+const usdVal = it => { const p=it.retail; if(p==null) return null; return it.currency==='KHR' ? Number(p)/RIEL_PER_USD : Number(p); };
+function renderCatalog(){
+  const box=$('#catalog'); if(!box) return;
+  if(!dashItems.length){ box.innerHTML='<span class="empty">No items yet</span>'; return; }
+  const sort=($('#dash-sort')||{}).value || 'category';
+  if(sort==='category'){
+    const groups={};
+    for(const it of dashItems){ const c=it.category||'Uncategorised'; (groups[c]=groups[c]||[]).push(it); }
+    box.innerHTML=Object.keys(groups).sort((a,b)=>a.localeCompare(b)).map(c=>
+      `<div class="cat-group"><div class="cat-head">${esc(c)}<span class="cat-n">${groups[c].length}</span></div>
+        <div class="catalog">${groups[c].map(prodCard).join('')}</div></div>`).join('');
+    return;
+  }
+  const cmp={
+    'name-asc':  (a,b)=>a.name.localeCompare(b.name),
+    'name-desc': (a,b)=>b.name.localeCompare(a.name),
+    'price-asc': (a,b)=>(usdVal(a)??Infinity)-(usdVal(b)??Infinity),
+    'price-desc':(a,b)=>(usdVal(b)??-Infinity)-(usdVal(a)??-Infinity),
+    'newest':    (a,b)=>b.id-a.id,
+  }[sort] || (()=>0);
+  box.innerHTML=`<div class="catalog">${[...dashItems].sort(cmp).map(prodCard).join('')}</div>`;
+}
+// Count a metric up from 0 to its value (keeps any prefix/suffix, e.g. $ or decimals).
+function animateCount(el){
+  const raw=(el.textContent||'').trim();
+  const m=raw.match(/^(\D*)([\d,]+(?:\.\d+)?)(.*)$/);
+  if(!m || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const pre=m[1], numStr=m[2], suf=m[3], target=parseFloat(numStr.replace(/,/g,''));
+  if(isNaN(target)) return;
+  const dec=(numStr.split('.')[1]||'').length, dur=650, t0=performance.now();
+  const tick=now=>{ const p=Math.min(1,(now-t0)/dur), v=target*(1-Math.pow(1-p,3));
+    el.textContent=pre+v.toLocaleString(undefined,{minimumFractionDigits:dec,maximumFractionDigits:dec})+suf;
+    if(p<1) requestAnimationFrame(tick); else el.textContent=raw; };
+  requestAnimationFrame(tick);
+}
+async function loadDash(){
+  const items=await api('/api/items');
+  const t=await api('/api/today');
+  // --- metric cards ---
+  const cats=new Set(items.map(i=>i.category||'—'));
+  const withPhoto=items.filter(i=>i.has_image).length;
+  const lowCount=items.filter(i=>(i.quantity_on_hand||0)<=5).length;
+  const M=(n,l,cls)=>`<div class="metric"><div class="n ${cls||''}">${n}</div><div class="l">${l}</div></div>`;
+  $('#metrics').innerHTML =
+    M(items.length,'Items') + M(cats.size,'Categories') +
+    M(money(t.total),"Today's sales",'good') + M(lowCount,'Low stock', lowCount?'warn':'');
+  document.querySelectorAll('#metrics .n').forEach(animateCount);
+  // --- visual catalog (photos) — remembered so re-sorting needs no refetch ---
+  dashItems = items;
+  renderCatalog();
+  // --- today's sales list ---
+  $('#today-total').textContent=money(t.total); $('#today-count').textContent=t.count+' sale'+(t.count===1?'':'s');
+  $('#today-list').innerHTML = t.sales.length ? t.sales.map(s=>
+    `<li><span class="muted">${s.at}</span><span class="name">#${s.id}</span><span class="pill">${esc(s.payment_method||'')}</span>
+     <span class="price">${money(s.total)}</span><button class="mini" onclick="voidSale(${s.id})">void</button></li>`).join('')
+    : '<li class="empty">No sales today</li>';
+  // --- low stock (with thumbnails) ---
+  const low=await api('/api/low?threshold=5');
+  $('#low').innerHTML = low.length ? low.map(it=>`<li>${thumb(it)}<span class="name">${itemLabel(it)}</span><span class="price warn">${money(it.quantity_on_hand)} ${esc(it.unit)}</span></li>`).join('')
+    : '<li class="empty">All well stocked</li>';
+  // --- best sellers ---
+  const best=await api('/api/best?days=30');
+  $('#best').innerHTML = best.length ? best.map((b,i)=>`<li><span class="muted">${i+1}.</span><span class="name">${esc(b.name)}</span><span class="price">${money(b.qty)} · ${money(b.revenue)}</span></li>`).join('')
+    : '<li class="empty">No sales yet</li>';
+}
+// Inline single-price edit from the Dash catalog — price + currency picker.
+function editCatPrice(ev, id, currency, el){
+  ev.stopPropagation();
+  if(el.dataset.editing) return;
+  el.dataset.editing='1';
+  const orig=el.innerHTML, raw=el.dataset.raw||'';
+  el.innerHTML=`<span class="pedit">
+      <input inputmode="decimal" value="${raw}">
+      <select>
+        <option value="KHR"${currency==='KHR'?' selected':''}>៛</option>
+        <option value="USD"${currency==='USD'?' selected':''}>$</option>
+      </select></span>`;
+  const wrap=el.querySelector('.pedit'), inp=el.querySelector('input'), sel=el.querySelector('select');
+  inp.focus(); inp.select();
+  wrap.onclick=e=>e.stopPropagation();
+  let done=false;
+  const finish=async(commit)=>{
+    if(done) return; done=true;
+    const v=inp.value.trim(), cur=sel.value;
+    if(commit && v){
+      try{ const upd=await api('/api/items/'+id+'/price',{method:'POST',headers:{'Content-Type':'application/json'},
+             body:JSON.stringify({price:v,kind:'retail',currency:cur})});
+        el.dataset.raw=(upd.retail!=null?upd.retail:''); el.dataset.editing='';
+        el.innerHTML=fmt(upd.retail,upd.currency)+' ✎'; toast('Price updated'); return;
+      }catch(e){ toast('Error: '+e.message); }
+    }
+    el.innerHTML=orig; el.dataset.editing='';
+  };
+  inp.onkeydown=e=>{ if(e.key==='Enter'){ e.preventDefault(); finish(true); } else if(e.key==='Escape'){ finish(false); } };
+  // save only when focus leaves the whole editor (so tabbing input→select doesn't save early)
+  wrap.addEventListener('focusout',()=>setTimeout(()=>{ if(!wrap.contains(document.activeElement)) finish(true); },0));
+}
+
+// ================= Vim-style keyboard motions (additive — click & tap still work) =================
+const VIM_TABS=['sell','find','stock','cats','ask','dash'];
+let vimCur=null, vimPendingG=false, vimHelpOpen=false;
+function vimTypingInField(){ const a=document.activeElement; return a && (a.tagName==='INPUT'||a.tagName==='TEXTAREA'||a.tagName==='SELECT'||a.isContentEditable); }
+// The set of things you can move a focus ring over, per view.
+function vimFocusables(){
+  const v=currentView;
+  if(v==='dash')  return [...document.querySelectorAll('#catalog .prod')];
+  if(v==='stock') return [...document.querySelectorAll('#stock-list > li')].filter(li=>li.querySelector('.name'));
+  if(v==='cats')  return [...document.querySelectorAll('#cats li')].filter(li=>li.querySelector('.name'));
+  if(v==='sell')  return [...document.querySelectorAll('#quick .qbtn, #results > li')].filter(el=>!el.classList.contains('empty'));
+  return [];
+}
+function setVimFocus(el){ if(vimCur) vimCur.classList.remove('vim-focus'); vimCur=el;
+  if(el){ el.classList.add('vim-focus'); el.scrollIntoView({block:'nearest',inline:'nearest'}); } }
+function vimEnsure(){ const els=vimFocusables(); if(!els.length){ setVimFocus(null); return null; }
+  if(!vimCur || !els.includes(vimCur)) setVimFocus(els[0]); return els; }
+// 2D nearest-neighbour move so grids feel like real hjkl; in a 1-column list h/l simply no-op.
+function vimMove(dir){ const els=vimEnsure(); if(!els||els.length<2) return;
+  const r=vimCur.getBoundingClientRect(), cx=r.left+r.width/2, cy=r.top+r.height/2;
+  let best=null, bestScore=Infinity;
+  for(const el of els){ if(el===vimCur) continue; const b=el.getBoundingClientRect();
+    const dx=(b.left+b.width/2)-cx, dy=(b.top+b.height/2)-cy; let ok=false,pri=0,sec=0;
+    if(dir==='l'){ ok=dx>4; pri=dx; sec=Math.abs(dy); }
+    else if(dir==='h'){ ok=dx<-4; pri=-dx; sec=Math.abs(dy); }
+    else if(dir==='j'){ ok=dy>4; pri=dy; sec=Math.abs(dx); }
+    else if(dir==='k'){ ok=dy<-4; pri=-dy; sec=Math.abs(dx); }
+    if(!ok) continue; const score=pri+sec*2; if(score<bestScore){ bestScore=score; best=el; } }
+  if(best) setVimFocus(best);
+}
+function vimEdge(last){ const els=vimEnsure(); if(!els) return; setVimFocus(els[last?els.length-1:0]); }
+// Click a control inside the focused row/card by matching its text or its onclick handler name.
+function vimClickIn(el, needles){ if(!el) return false;
+  const btns=[...el.querySelectorAll('button,[onclick]')];
+  for(const n of needles){ const hit=btns.find(b=>((b.textContent||'').toLowerCase().includes(n))||((b.getAttribute('onclick')||'').toLowerCase().includes(n)));
+    if(hit){ hit.click(); return true; } } return false; }
+function vimOpen(){ const els=vimEnsure(); if(!els) return; const v=currentView;
+  if(v==='sell'){ vimCur.click(); return; }
+  if(v==='dash'){ vimCur.querySelector('[onclick*="openGallery"]')?.click(); return; }
+  vimClickIn(vimCur, ['opengallery','photos']); }
+function vimEditPrice(){ if(!vimCur) return;
+  if(currentView==='dash'){ vimCur.querySelector('.pr')?.click(); } else vimClickIn(vimCur, ['prices']); }
+function vimPhotos(){ if(!vimCur) return;
+  if(currentView==='dash'){ vimCur.querySelector('[onclick*="openGallery"]')?.click(); } else vimClickIn(vimCur, ['photos','opengallery']); }
+function vimDelete(){ vimClickIn(vimCur, ['deleteitem','delete']); }
+function vimSlash(){ const s=$('#search');
+  const el=(currentView==='sell'&&s)?s:document.querySelector('#view-'+currentView+' input:not([type=file])');
+  if(el){ el.focus(); if(el.select) el.select(); } }
+function vimTab(delta){ let i=VIM_TABS.indexOf(currentView); i=(i+delta+VIM_TABS.length)%VIM_TABS.length;
+  show(VIM_TABS[i]); setVimFocus(null); setTimeout(()=>vimEnsure(),80); }
+function vimCloseOverlays(){ const lb=document.querySelector('.lightbox'); if(lb){ lb.remove(); return true; }
+  const m=document.querySelector('.modal-ov'); if(m){ m.remove(); vimHelpOpen=false; return true; } return false; }
+
+function toggleVimHelp(){ const ex=document.querySelector('.vim-help-ov');
+  if(ex){ ex.remove(); vimHelpOpen=false; return; }
+  const rows=[['h j k l','move focus (left / down / up / right)'],['g g','jump to first item'],['G','jump to last item'],
+    ['[  ]','previous / next tab'],['/','focus search / first field'],['o  Enter','open focused (photos · add to cart)'],
+    ['e','edit price (Dash catalog)'],['p','photos of focused item'],['x','delete focused item'],
+    ['Esc','close popup / leave a text box'],['?','toggle this help']];
+  const body=rows.map(([k,d])=>`<tr><td class="k">${k.split(/\s+/).map(x=>'<kbd>'+esc(x)+'</kbd>').join('')}</td><td>${d}</td></tr>`).join('');
+  const ov=document.createElement('div'); ov.className='modal-ov vim-help-ov';
+  ov.innerHTML=`<div class="modal-card vim-help"><h2 style="text-transform:none;font-size:1.05rem;color:var(--ink);letter-spacing:0">⌨ Keyboard shortcuts</h2>
+    <table>${body}</table>
+    <div class="muted" style="margin-top:.6rem">Mouse & touch still work everywhere — this is extra.</div>
+    <div class="row" style="margin-top:.7rem"><button class="mini" style="margin-left:auto" onclick="toggleVimHelp()">Close</button></div></div>`;
+  ov.onclick=e=>{ if(e.target===ov) toggleVimHelp(); }; document.body.appendChild(ov); vimHelpOpen=true;
+}
+
+document.addEventListener('keydown', e=>{
+  if(e.metaKey||e.ctrlKey||e.altKey) return;
+  const k=e.key;
+  // 1) Lightbox has first claim on the keyboard.
+  const lb=document.querySelector('.lightbox');
+  if(lb){ if(k==='Escape'||k==='q'){ lb.remove(); e.preventDefault(); }
+    else if(k==='h'||k==='ArrowLeft'){ lb.querySelector('.prev')?.click(); e.preventDefault(); }
+    else if(k==='l'||k==='ArrowRight'){ lb.querySelector('.next')?.click(); e.preventDefault(); } return; }
+  // 2) Typing in a field: only Esc (blur) is a motion.
+  if(vimTypingInField()){ if(k==='Escape') document.activeElement.blur(); return; }
+  // 3) A modal open (gallery / options / help): Esc closes, ? toggles help, else leave it for the mouse.
+  if(document.querySelector('.modal-ov')){ if(k==='Escape'){ vimCloseOverlays(); e.preventDefault(); }
+    else if(k==='?'){ toggleVimHelp(); e.preventDefault(); } return; }
+  // 4) Normal motions.
+  if(k==='?'){ e.preventDefault(); toggleVimHelp(); return; }
+  if(k==='Escape'){ setVimFocus(null); return; }
+  if(k==='g'){ e.preventDefault(); if(vimPendingG){ vimPendingG=false; vimEdge(false); } else { vimPendingG=true; setTimeout(()=>vimPendingG=false,600); } return; }
+  vimPendingG=false;
+  switch(k){
+    case 'h': case 'j': case 'k': case 'l': e.preventDefault(); vimMove(k); break;
+    case 'G': e.preventDefault(); vimEdge(true); break;
+    case '[': e.preventDefault(); vimTab(-1); break;
+    case ']': e.preventDefault(); vimTab(1); break;
+    case '/': e.preventDefault(); vimSlash(); break;
+    case 'o': case 'Enter': e.preventDefault(); vimOpen(); break;
+    case 'e': e.preventDefault(); vimEditPrice(); break;
+    case 'p': e.preventDefault(); vimPhotos(); break;
+    case 'x': e.preventDefault(); vimDelete(); break;
+  }
+});
+
+// ---- Ask (AI assistant) ----
+function chatAdd(who, text){
+  const box=$('#chat'); const d=document.createElement('div');
+  d.className='bubble '+(who==='you'?'you':'ai');
+  d.textContent=text; box.appendChild(d); box.scrollTop=box.scrollHeight; return d;
+}
+async function sendAssistant(){
+  const el=$('#ask-input'); const text=el.value.trim(); if(!text) return; el.value='';
+  chatAdd('you', text);
+  const bubble=chatAdd('ai','…');
+  try{
+    const res=await api('/api/assistant',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text})});
+    bubble.textContent=res.reply||'(no reply)';
+    if(res.action) attachAction(bubble, res.action);
+  }catch(e){ bubble.textContent='Error: '+e.message; }
+}
+function attachAction(afterNode, action){
+  const btn=document.createElement('button'); btn.className='act'; btn.textContent='Confirm';
+  btn.style.cssText='margin:.1rem 0 .6rem 0;margin-right:2rem';
+  btn.onclick=async()=>{
+    btn.disabled=true;
+    try{
+      if(action.type==='sale'){
+        const r=await api('/api/sale',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({payment_method:'cash',lines:action.lines.map(l=>({item_id:l.item_id,quantity:l.quantity}))})});
+        chatAdd('ai',`✓ Sale #${r.id} recorded — ${money(r.total)} ${r.currency}`);
+      } else if(action.type==='restock'){
+        const it=await api('/api/items/'+action.item_id+'/restock',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({quantity:action.quantity})});
+        chatAdd('ai',`✓ ${it.name} restocked — now ${money(it.quantity_on_hand)} ${it.unit}`);
+      } else if(action.type==='items'){
+        let n=0;
+        for(const d of action.items){ const b={};
+          for(const k of ['name','category','unit','retail','wholesale','cost','stock','supplier']){ if(d[k]!=null&&d[k]!=='') b[k]=d[k]; }
+          if(!b.name) continue;
+          await api('/api/items',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}); n++; }
+        chatAdd('ai',`✓ Added ${n} item(s)`); loadStock();
+      }
+    }catch(e){ chatAdd('ai','Error: '+e.message); btn.disabled=false; }
+  };
+  afterNode.after(btn); $('#chat').scrollTop=$('#chat').scrollHeight;
+}
+
+async function voidSale(id){ if(!confirm('Void sale #'+id+'? Stock will be restored.')) return;
+  try{ await api('/api/sale/'+id+'/void',{method:'POST'}); toast('Voided #'+id); loadDash(); }catch(e){ toast('Error: '+e.message); } }
+
+// ---- Layout mode: 'mobile' (bottom nav, big touch targets) vs 'desktop' (top tabs, dense) ----
+function detectMode(){ return (matchMedia('(pointer:coarse)').matches || window.innerWidth<=800) ? 'mobile' : 'desktop'; }
+let UI_MODE = localStorage.getItem('sk_uimode') || detectMode();
+function applyUiMode(){
+  document.body.classList.toggle('ui-mobile', UI_MODE==='mobile');
+  document.body.classList.toggle('ui-desktop', UI_MODE==='desktop');
+  const btn=document.getElementById('mode-toggle');
+  if(btn){ btn.textContent = UI_MODE==='mobile' ? '📱' : '🖥️';
+           btn.title = 'Switch to '+(UI_MODE==='mobile'?'desktop':'mobile')+' layout'; }
+}
+function setUiMode(m){ UI_MODE=m; localStorage.setItem('sk_uimode',m); applyUiMode(); }
+function toggleUiMode(){ setUiMode(UI_MODE==='mobile'?'desktop':'mobile'); toast(UI_MODE==='mobile'?'Mobile layout':'Desktop layout'); }
+applyUiMode();
+
+checkAuth();
+api('/api/items').then(populateDatalists).catch(()=>{});   // warm autocomplete on load
+loadCategories();
+loadQuick();
+// Camera scanning needs a secure context (HTTPS). Show the scan buttons only then.
+if(window.isSecureContext){
+  $('#cam-btn').style.display='';
+  const nc=$('#ni-cam'); if(nc) nc.style.display='';
+}
+</script>
+</body>
+</html>
